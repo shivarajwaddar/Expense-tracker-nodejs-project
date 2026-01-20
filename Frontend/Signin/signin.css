@@ -1,0 +1,120 @@
+/* General Reset */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: #f0f2f2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+/* Card Container */
+.form-card {
+  background-color: #ffffff;
+  width: 100%;
+  max-width: 400px;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+}
+
+/* Header Styling */
+.form-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.form-header h1 {
+  color: #00796b; /* Same Signature Teal */
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+
+.form-header p {
+  color: #757575;
+  font-size: 14px;
+}
+
+/* Input Groups */
+.input-group {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #00796b; /* Same Signature Teal */
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+input {
+  border: none;
+  border-bottom: 2px solid #e0e0e0;
+  padding: 12px 4px;
+  font-size: 16px;
+  transition: border-color 0.3s ease;
+  outline: none;
+  background-color: transparent;
+}
+
+input:focus {
+  border-bottom: 2px solid #00796b; /* Highlight Teal */
+}
+
+/* Button Styling */
+.signup-btn {
+  width: 100%;
+  background-color: #00796b; /* Same Signature Teal */
+  color: white;
+  border: none;
+  padding: 16px;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 10px;
+  box-shadow: 0 4px 6px rgba(0, 121, 107, 0.2);
+  transition:
+    transform 0.1s,
+    background-color 0.2s;
+}
+
+.signup-btn:hover {
+  background-color: #00695c; /* Darker Teal on hover */
+}
+
+.signup-btn:active {
+  transform: scale(0.98);
+}
+
+/* Footer link */
+.form-footer {
+  margin-top: 25px;
+  text-align: center;
+  font-size: 14px;
+  color: #757575;
+}
+
+.form-footer a {
+  color: #00796b; /* Same Signature Teal */
+  text-decoration: none;
+  font-weight: bold;
+}
+
+/* Tablet/Large Screen Adjustments */
+@media (min-width: 768px) {
+  .form-card {
+    padding: 40px;
+  }
+}

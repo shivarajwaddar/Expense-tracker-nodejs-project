@@ -3,28 +3,17 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Expense Manager Signup</title>
-    <link rel="stylesheet" href="index.css" />
+    <title>Expense Manager Login</title>
+    <link rel="stylesheet" href="signin.css" />
   </head>
   <body>
     <div class="form-card">
       <header class="form-header">
-        <h1>Sign up</h1>
-        <p>Manage your daily expenses</p>
+        <h1>Welcome Back</h1>
+        <p>Login to manage your expenses</p>
       </header>
 
       <form>
-        <div class="input-group">
-          <label for="name">Full Name</label>
-          <input
-            id="name"
-            name="name"
-            type="text"
-            placeholder="Enter your name"
-            required
-          />
-        </div>
-
         <div class="input-group">
           <label for="email">Email Address</label>
           <input
@@ -47,14 +36,16 @@
           />
         </div>
 
-        <button type="submit" class="signup-btn">Create Account</button>
+        <button type="submit" class="signup-btn">Sign In</button>
       </form>
 
       <footer class="form-footer">
-        <p>Already have an account? <a href="#">Login</a></p>
+        <p>
+          Don't have an account? <a href="../Signup/signup.html">Sign up</a>
+        </p>
       </footer>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="index.js"></script>
+    <script src="signin.js"></script>
   </body>
 </html>
