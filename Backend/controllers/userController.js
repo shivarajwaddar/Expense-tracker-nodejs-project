@@ -1,14 +1,20 @@
 const User = require("../models/userModel");
+const bcrypt = require("bcrypt");
 
 // Signup user
 const signUpUser = async (req, res) => {
   try {
     const { name, email, password } = req.body;
+
+    // Generate a "salt" (extra randomness) and hash the password
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
     // Create the user in MySQL using Sequelize
     const newUser = await User.create({
       name,
       email,
-      password, // Note: In a real app, hash this first!
+      password: hashedPassword, // Note: In a real app, hash this first!
     });
 
     res.status(201).json({
@@ -44,8 +50,9 @@ const signInUser = async (req, res) => {
     }
 
     // 3. Check if password matches
+    const isMatch = await bcrypt.compare(password, user.password);
 
-    if (user.password !== password) {
+    if (!isMatch) {
       return res.status(401).json({ message: "Invalid password" });
     }
 
