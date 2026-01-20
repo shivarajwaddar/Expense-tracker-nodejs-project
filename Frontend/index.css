@@ -1,0 +1,87 @@
+/* General Reset */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "Roboto", sans-serif;
+  background-color: #f0f2f2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* Ensures body doesn't force scrolling if content is small */
+  height: 100vh;
+  margin: 0;
+  overflow: hidden; /* Prevents the body itself from scrolling */
+}
+
+.form-card {
+  background-color: #ffffff;
+  width: 90%;
+  max-width: 360px; /* Slightly narrower */
+  padding: 20px; /* Reduced padding */
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.form-header {
+  text-align: center;
+  margin-bottom: 15px; /* Reduced gap */
+}
+
+.form-header h1 {
+  color: #00796b;
+  font-size: 22px; /* Smaller font */
+}
+
+.form-header p {
+  color: #757575;
+  font-size: 13px;
+}
+
+.input-group {
+  margin-bottom: 12px; /* Reduced gap between inputs */
+  display: flex;
+  flex-direction: column;
+}
+
+label {
+  font-size: 12px; /* Smaller label */
+  font-weight: 600;
+  color: #00796b;
+  margin-bottom: 2px;
+  text-transform: uppercase;
+}
+
+input {
+  border: none;
+  border-bottom: 1px solid #e0e0e0; /* Thinner border */
+  padding: 8px 0; /* Tighter padding */
+  font-size: 16px;
+  outline: none;
+}
+
+input:focus {
+  border-bottom: 2px solid #00796b;
+}
+
+.signup-btn {
+  width: 100%;
+  background-color: #00796b;
+  color: white;
+  border: none;
+  padding: 12px; /* Smaller button */
+  border-radius: 4px;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.form-footer {
+  margin-top: 15px; /* Reduced footer margin */
+  text-align: center;
+  font-size: 13px;
+}
