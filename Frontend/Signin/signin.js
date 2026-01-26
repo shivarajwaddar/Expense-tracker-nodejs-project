@@ -9,10 +9,13 @@ if (signinForm) {
 
     try {
       // Sending the POST request to your signin endpoint
-      const response = await axios.post("http://localhost:3000/api/signin", {
-        email,
-        password,
-      });
+      const response = await axios.post(
+        "http://localhost:3000/api/users/signin",
+        {
+          email,
+          password,
+        },
+      );
 
       // If successful (Status 200)
       alert(response.data.message);
@@ -24,7 +27,7 @@ if (signinForm) {
       // Redirect to the expense manager dashboard
       alert("login successfull");
 
-      // window.location.href = "/dashboard.html";
+      window.location.href = "../Expenses/expense-tracker.html";
     } catch (err) {
       // Handle errors (401, 404, or 500)
       if (err.response) {

@@ -3,6 +3,7 @@ const db = require("./util/db-connection");
 const User = require("./models/userModel"); // Import your User model
 const cors = require("cors");
 const userRouter = require("./routes/userRoute");
+const expenseRouter = require("./routes/expenseRoute");
 const app = express();
 
 // Middleware
@@ -10,7 +11,8 @@ app.use(express.json());
 app.use(cors());
 
 // --- SIGNUP ROUTE ---
-app.use("/api", userRouter);
+app.use("/api/users", userRouter);
+app.use("/api/expense", expenseRouter);
 
 // Database Sync and Server Start
 db.sync({ force: false })
