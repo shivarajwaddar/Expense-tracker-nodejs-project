@@ -24,7 +24,6 @@
         align-items: center;
         gap: 8px;
       }
-      /* Custom background to replace missing Tailwind classes */
       body {
         background-color: #f8f9fa;
         min-height: 100vh;
@@ -36,12 +35,24 @@
         border-radius: 12px;
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
       }
+      .header-flex {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
     </style>
   </head>
 
   <body>
     <div class="container main-container">
-      <h3 class="mb-4 text-dark">Expense Tracker</h3>
+      <div class="header-flex mb-4">
+        <h3 class="text-dark m-0">Expense Tracker</h3>
+        <button id="logoutBtn" class="btn btn-outline-danger btn-sm">
+          Logout
+        </button>
+      </div>
+
+      <p id="welcome-user" class="text-muted fw-bold"></p>
 
       <form id="expenseForm" class="row g-3 align-items-center">
         <div class="col-md-3">
@@ -101,7 +112,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-
     <script src="expense-tracker.js"></script>
   </body>
 </html>

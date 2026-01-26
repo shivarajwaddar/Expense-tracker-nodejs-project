@@ -1,5 +1,6 @@
 const User = require("../models/userModel");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
 // Signup user
 const signUpUser = async (req, res) => {
@@ -39,34 +40,34 @@ const signInUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // 1. Find the user by the email provided in the request
-    const user = await User.findOne({
-      where: {
-        email: email, // Use the dynamic email from req.body
-      },
-    });
+    // 1. Check if user exists
+    const user = await User.findOne({ where: { email: email } });
     if (!user) {
-      return res.status(404).json({ message: "User not found! Please Signup" });
+      return res.status(404).json({ message: "User not found" });
     }
 
-    // 3. Check if password matches
-    const isMatch = await bcrypt.compare(password, user.password);
-
-    if (!isMatch) {
+    // 2. Compare passwords
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
       return res.status(401).json({ message: "Invalid password" });
     }
 
-    // 4. Send positive response if both email and password match
+    // 3. Generate Token (Encrypting ID and Name)
+    // Using a secret key - in production, use process.env.JWT_SECRET
+    const token = jwt.sign(
+      { userId: user.id, name: user.name },
+      process.env.JWT_SECRET, // randonm takenm
+      { expiresIn: "24h" }, // Token will expire in 24 hours
+    );
+
+    // 4. Send Success Response
     res.status(200).json({
-      message: "Login successful!",
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-      },
+      message: "Login successful",
+      token: token,
+      name: user.name, // Add this line!
     });
   } catch (err) {
-    console.error("Sign-in error:", err);
+    console.error(err);
     res.status(500).json({ message: "Internal Server Error" });
   }
 };
