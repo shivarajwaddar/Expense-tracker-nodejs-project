@@ -8,6 +8,7 @@ const userRouter = require("./routes/userRoute");
 const expenseRouter = require("./routes/expenseRoute");
 const paymentRouter = require("./routes/paymentRoute");
 const setupAssociations = require("./util/associations");
+const premiumRoutes = require("./routes/premiumRoute");
 
 const app = express();
 
@@ -28,6 +29,8 @@ setupAssociations();
 app.use("/api/users", userRouter);
 app.use("/api/expense", expenseRouter);
 app.use("/api/payment", paymentRouter);
+// Mount the premium routes with the /api/premium prefix
+app.use("/api/premium", premiumRoutes);
 
 // DB & Server
 db.sync({ alter: true })

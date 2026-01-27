@@ -18,10 +18,13 @@ const User = sequelize.define("db_user", {
     type: DataTypes.STRING,
     allowNull: false,
   },
-  // ADD THIS FIELD:
   isPremium: {
     type: DataTypes.BOOLEAN,
-    defaultValue: false, // Default status is a regular user
+    defaultValue: false,
+  },
+  totalExpenses: {
+    type: DataTypes.INTEGER, // Changed from Sequelize.INTEGER to DataTypes.INTEGER
+    defaultValue: 0,
   },
 });
 
