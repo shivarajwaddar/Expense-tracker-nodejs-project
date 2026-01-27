@@ -2,7 +2,6 @@ const sequelize = require("../util/db-connection");
 const { DataTypes } = require("sequelize");
 
 const User = sequelize.define("db_user", {
-  // Changed firstName to name to match your frontend input 'id="name"'
   name: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -10,14 +9,19 @@ const User = sequelize.define("db_user", {
   email: {
     type: DataTypes.STRING,
     allowNull: false,
-    unique: true, // Prevents duplicate accounts with the same email
+    unique: true,
     validate: {
-      isEmail: true, // Ensures the data actually looks like an email address
+      isEmail: true,
     },
   },
   password: {
     type: DataTypes.STRING,
     allowNull: false,
+  },
+  // ADD THIS FIELD:
+  isPremium: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false, // Default status is a regular user
   },
 });
 

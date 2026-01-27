@@ -1,0 +1,98 @@
+:root {
+  --primary-color: #4361ee;
+  --secondary-color: #3f37c9;
+  --bg-color: #f0f2f5;
+}
+
+body {
+  background: var(--bg-color);
+  font-family:
+    "Inter",
+    system-ui,
+    -apple-system,
+    sans-serif;
+  color: #2b2d42;
+  min-height: 100vh;
+}
+
+.navbar-custom {
+  background: white;
+  padding: 1rem 2rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  margin-bottom: 2rem;
+}
+
+.main-card {
+  background: white;
+  border: none;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  padding: 2rem;
+}
+
+.welcome-text {
+  font-size: 0.9rem;
+  color: #6c757d;
+  margin-bottom: 1.5rem;
+}
+
+.form-label {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: #495057;
+}
+
+.custom-input {
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+  padding: 0.6rem 0.8rem;
+  transition: all 0.2s;
+}
+
+.custom-input:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.15);
+}
+
+.btn-add {
+  background: var(--primary-color);
+  border: none;
+  border-radius: 8px;
+  padding: 0.6rem;
+  font-weight: 600;
+  transition: transform 0.2s;
+}
+
+.btn-add:hover {
+  background: var(--secondary-color);
+  transform: translateY(-1px);
+}
+
+/* Expense Item Styling */
+.expense-item {
+  background: white;
+  border-radius: 12px;
+  margin-bottom: 12px;
+  padding: 1rem;
+  border: 1px solid #edf2f4;
+  transition: all 0.2s;
+}
+
+.expense-item:hover {
+  border-color: var(--primary-color);
+  transform: scale(1.01);
+}
+
+.category-badge {
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: #e9ecef;
+  color: #495057;
+}
+
+.amount-text {
+  font-weight: 700;
+  color: #2b2d42;
+  font-size: 1.1rem;
+}

@@ -72,7 +72,25 @@ const signInUser = async (req, res) => {
   }
 };
 
+const getUser = async (req, res) => {
+  try {
+    // req.user is attached by the authenticate middleware
+    if (!req.user) {
+      return res.status(404).json({ message: "User context missing" });
+    }
+
+    res.status(200).json({
+      name: req.user.name,
+      isPremium: req.user.isPremium,
+    });
+  } catch (err) {
+    console.error("GET USER ERROR:", err); // This will show the real error in your terminal
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
 module.exports = {
   signUpUser,
   signInUser,
+  getUser,
 };
