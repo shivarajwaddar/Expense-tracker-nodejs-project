@@ -1,5 +1,6 @@
 const Order = require("../models/orderModel");
 const User = require("../models/userModel");
+const sequelize = require("../util/db-connection");
 const { Cashfree } = require("cashfree-pg");
 
 // 1. SDK Initialization (v4.0.10 Style)
@@ -58,50 +59,133 @@ exports.createOrder = async (req, res) => {
 
 /**
  * STEP 2: Verify Payment
+ *
+ */
+/**
+ * Verifies the payment status with Cashfree and upgrades user to Premium.
+ * Uses a Database Transaction to ensure data consistency.
  */
 exports.verifyPayment = async (req, res) => {
+  // 1. Initialize a Sequelize transaction to ensure "all-or-nothing" execution
+  const t = await sequelize.transaction();
+
   try {
-    const { order_id } = req.body; // Sent from your frontend after redirect
+    const { order_id } = req.body;
 
-    if (!order_id)
+    // Validate request input
+    if (!order_id) {
       return res.status(400).json({ error: "Order ID is required" });
+    }
 
-    // Fetch all payments for this order from Cashfree
+    // 2. Fetch payment details from Cashfree API to verify the actual status
     const response = await Cashfree.PGOrderFetchPayments(
       "2025-01-01",
       order_id,
     );
 
-    // Check if any attempt was successful
+    // Find if any payment attempt for this order has a 'SUCCESS' status
     const successfulPayment = response.data.find(
       (p) => p.payment_status === "SUCCESS",
     );
 
     if (successfulPayment) {
-      // Find our local order record
-      const order = await Order.findOne({ where: { id: order_id } });
+      // Fetch the order from our local DB using the transaction lock
+      const order = await Order.findOne({
+        where: { id: order_id },
+        transaction: t,
+      });
 
+      // Check if order exists and hasn't been processed yet (prevents double-upgrading)
       if (order && order.status !== "SUCCESS") {
-        // Update Order table
-        await order.update({
-          status: "SUCCESS",
-          cfPaymentId: successfulPayment.cf_payment_id.toString(),
-        });
+        // 3. Update Order record with success status and Cashfree Reference ID
+        await order.update(
+          {
+            status: "SUCCESS",
+            cfPaymentId: successfulPayment.cf_payment_id.toString(),
+          },
+          { transaction: t },
+        );
 
-        // Update User table to Premium
-        await User.update({ isPremium: true }, { where: { id: order.userId } });
+        // 4. Grant Premium access to the user
+        await User.update(
+          { isPremium: true },
+          { where: { id: order.userId }, transaction: t },
+        );
+
+        // 5. If both updates succeed, permanently save changes to the database
+        await t.commit();
 
         return res
           .status(200)
-          .json({ message: "Payment successful, welcome to Premium!" });
+          .json({ message: "Payment successful! User is now Premium." });
       }
-      return res.status(200).json({ message: "Already updated" });
+
+      // If order was already SUCCESS, rollback the transaction (no changes needed)
+      await t.rollback();
+      return res.status(200).json({ message: "Order already processed." });
     } else {
+      // 6. If no successful payment found, mark our local order as FAILED
       await Order.update({ status: "FAILED" }, { where: { id: order_id } });
-      return res.status(400).json({ message: "Payment failed or incomplete" });
+
+      // Rollback the transaction since the premium upgrade shouldn't happen
+      await t.rollback();
+      return res
+        .status(400)
+        .json({ message: "Payment failed or is still pending." });
     }
   } catch (err) {
-    console.error("VERIFY ERROR:", err.response?.data || err.message);
-    res.status(500).json({ error: "Internal Server Error" });
+    // 7. Critical Error: Rollback any database changes to prevent partial data updates
+    if (t) await t.rollback();
+
+    console.error("VERIFICATION ERROR:", err.message);
+    res
+      .status(500)
+      .json({ error: "Internal Server Error during verification" });
   }
 };
+// exports.verifyPayment = async (req, res) => {
+//   try {
+//     const { order_id } = req.body; // Sent from your frontend after redirect
+
+//     if (!order_id)
+//       return res.status(400).json({ error: "Order ID is required" });
+
+//     // Fetch all payments for this order from Cashfree
+//     const response = await Cashfree.PGOrderFetchPayments(
+//       "2025-01-01",
+//       order_id,
+//     );
+
+//     // Check if any attempt was successful
+//     const successfulPayment = response.data.find(
+//       (p) => p.payment_status === "SUCCESS",
+//     );
+
+//     if (successfulPayment) {
+//       // Find our local order record
+//       const order = await Order.findOne({ where: { id: order_id } });
+
+//       if (order && order.status !== "SUCCESS") {
+//         // Update Order table
+//         await order.update({
+//           status: "SUCCESS",
+//           cfPaymentId: successfulPayment.cf_payment_id.toString(),
+//         });
+
+//         // Update User table to Premium
+//         await User.update({ isPremium: true }, { where: { id: order.userId } });
+
+//         return res
+//           .status(200)
+//           .json({ message: "Payment successful, welcome to Premium!" });
+//       }
+//       return res.status(200).json({ message: "Already updated" });
+//     } else {
+//       await Order.update({ status: "FAILED" }, { where: { id: order_id } });
+//       return res.status(400).json({ message: "Payment failed or incomplete" });
+//     }
+//   } catch (err) {
+//     console.error("VERIFY ERROR:", err.response?.data || err.message);
+//     res.status(500).json({ error: "Internal Server Error" });
+//   }
+// };

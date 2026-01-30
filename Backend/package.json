@@ -11,6 +11,7 @@
   "type": "commonjs",
   "dependencies": {
     "@cashfreepayments/cashfree-js": "^1.0.5",
+    "@google/genai": "^1.38.0",
     "bcrypt": "^6.0.0",
     "cashfree-pg": "^4.0.10",
     "cors": "^2.8.5",
