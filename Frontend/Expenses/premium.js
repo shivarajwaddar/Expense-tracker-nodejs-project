@@ -60,6 +60,12 @@ async function verifyAndEnablePremium(orderId, token) {
 function showPremiumUI() {
   const premiumBtn = document.getElementById("premiumBtn");
   const leaderboardBtn = document.getElementById("leaderboardBtn");
+  const showReportBtn = document.getElementById("reportsBtn");
+
+  // Reveal the "See Report" button
+  if (showReportBtn) {
+    showReportBtn.classList.remove("d-none");
+  }
 
   if (premiumBtn) {
     premiumBtn.innerHTML =
