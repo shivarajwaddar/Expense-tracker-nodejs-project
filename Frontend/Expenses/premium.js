@@ -16,7 +16,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   const leaderboardBtn = document.getElementById("leaderboardBtn");
   if (leaderboardBtn) {
     leaderboardBtn.onclick = async () => {
-      await toggleLeaderboard(token);
+      const boardSection = document.getElementById("leaderboardSection");
+
+      // Toggle logic: If opening the section, fetch page 1
+      if (boardSection.classList.contains("d-none")) {
+        boardSection.classList.remove("d-none");
+        await fetchLeaderboard(token, 1);
+      } else {
+        boardSection.classList.add("d-none");
+      }
     };
   }
 });
@@ -62,7 +70,6 @@ function showPremiumUI() {
   const leaderboardBtn = document.getElementById("leaderboardBtn");
   const showReportBtn = document.getElementById("reportsBtn");
 
-  // Reveal the "See Report" button
   if (showReportBtn) {
     showReportBtn.classList.remove("d-none");
   }
@@ -74,31 +81,22 @@ function showPremiumUI() {
     premiumBtn.classList.replace("btn-warning", "btn-success");
   }
 
-  // Reveal the hidden leaderboard button
   if (leaderboardBtn) {
     leaderboardBtn.classList.remove("d-none");
   }
 }
 
-// Fetches and displays the leaderboard data
-async function toggleLeaderboard(token) {
-  const boardSection = document.getElementById("leaderboardSection");
+// Fetches and displays the leaderboard data with pagination
+async function fetchLeaderboard(token, page = 1) {
   const boardList = document.getElementById("leaderboardList");
 
-  // If already open, just hide it (Toggle)
-  if (!boardSection.classList.contains("d-none")) {
-    boardSection.classList.add("d-none");
-    return;
-  }
-
   try {
-    // Show loading state
     boardList.innerHTML =
       '<li class="list-group-item">Loading leaderboard...</li>';
-    boardSection.classList.remove("d-none");
 
+    // Requesting specific page with a limit of 5 from backend
     const res = await axios.get(
-      "http://localhost:3000/api/premium/leaderboard",
+      `http://localhost:3000/api/premium/leaderboard?page=${page}`,
       {
         headers: { Authorization: token },
       },
@@ -106,31 +104,55 @@ async function toggleLeaderboard(token) {
 
     boardList.innerHTML = ""; // Clear loader
 
-    if (res.data.length === 0) {
+    const { leaderboard, totalPages, currentPage } = res.data;
+
+    if (!leaderboard || leaderboard.length === 0) {
       boardList.innerHTML =
         '<li class="list-group-item">No data available</li>';
       return;
     }
 
-    res.data.forEach((user, index) => {
-      // We check for both naming conventions just in case
-      const amount =
-        user.totalExpenses !== undefined
-          ? user.totalExpenses
-          : user.total_cost || 0;
+    // Render users with calculated rank across pages
+    leaderboard.forEach((user, index) => {
+      const rank = (currentPage - 1) * 5 + (index + 1);
+      const amount = user.totalExpenses ?? user.total_cost ?? 0;
 
       boardList.innerHTML += `
             <li class="list-group-item d-flex justify-content-between align-items-center">
                 <span>
-                    <span class="badge bg-primary rounded-pill me-2">${index + 1}</span>
+                    <span class="badge bg-primary rounded-pill me-2">${rank}</span>
                     ${user.name}
                 </span>
                 <span class="fw-bold text-success">₹${amount}</span>
             </li>`;
     });
+
+    // Generate pagination controls
+    renderLeaderboardPagination(token, totalPages, currentPage);
   } catch (err) {
     console.error("Leaderboard Error:", err);
-    boardSection.classList.add("d-none");
-    alert("Unable to fetch leaderboard. Please try again later.");
+    alert("Unable to fetch leaderboard.");
+  }
+}
+
+// Renders the pagination buttons for the leaderboard
+function renderLeaderboardPagination(token, totalPages, activePage) {
+  const paginationContainer = document.getElementById("leaderboardPagination");
+  if (!paginationContainer) return;
+
+  paginationContainer.innerHTML = ""; // Clear existing buttons
+
+  for (let i = 1; i <= totalPages; i++) {
+    const li = document.createElement("li");
+    li.className = `page-item ${i === activePage ? "active" : ""}`; // Mark current page as active
+
+    // Create button and attach click event for specific page
+    const btn = document.createElement("button");
+    btn.className = "page-link";
+    btn.innerText = i;
+    btn.onclick = () => fetchLeaderboard(token, i);
+
+    li.appendChild(btn);
+    paginationContainer.appendChild(li);
   }
 }

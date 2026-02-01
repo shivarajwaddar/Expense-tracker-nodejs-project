@@ -29,7 +29,7 @@ exports.createOrder = async (req, res) => {
       },
       order_meta: {
         // {order_id} is a placeholder Cashfree replaces automatically
-        return_url: `http://127.0.0.1:5500/1.%20Build%20_Expense_tracker/Frontend/Expenses/expense-tracker.html?order_id={order_id}`,
+        return_url: `http://127.0.0.1:5500/ExpenseTracker/Frontend/Expenses/expense-tracker.html?order_id={order_id}`,
       },
     };
 

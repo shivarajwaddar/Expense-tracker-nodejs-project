@@ -31,21 +31,16 @@
       </div>
     </nav>
 
-    <div id="reportsPage" class="container mt-0">
+    <div id="reportsPage" class="container mt-4">
       <div class="card shadow-sm border-0 p-4">
-        <div class="d-flex justify-content-between align-items-center mb-0">
+        <div class="d-flex justify-content-between align-items-center mb-4">
           <div class="text-start">
             <h3 class="text-primary fw-bold m-0">Detailed Reports</h3>
             <p class="text-muted small">Viewing your transaction history</p>
           </div>
-          <div class="d-flex gap-2">
-            <button
-              id="downloadReportBtn"
-              class="btn btn-success btn-sm fw-bold"
-            >
-              <i class="bi bi-file-earmark-spreadsheet me-1"></i> Export CSV
-            </button>
-          </div>
+          <button id="downloadReportBtn" class="btn btn-success btn-sm fw-bold">
+            <i class="bi bi-file-earmark-spreadsheet me-1"></i> Export CSV
+          </button>
         </div>
 
         <div class="row mb-4 justify-content-center">
@@ -103,6 +98,13 @@
             ></tfoot>
           </table>
         </div>
+
+        <nav aria-label="Report pagination" class="mt-4">
+          <ul
+            id="reportPagination"
+            class="pagination pagination-sm justify-content-center"
+          ></ul>
+        </nav>
       </div>
     </div>
 

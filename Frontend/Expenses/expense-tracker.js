@@ -2,6 +2,7 @@
 // 1. GLOBAL STATE & AUTH
 // ================================
 let expenseList = [];
+let currentPage = 1;
 const token = localStorage.getItem("token");
 
 // Redirect if not logged in
@@ -21,6 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const ul = document.getElementById("ExpenseList");
   const welcomeMsg = document.getElementById("welcome-user");
   const logoutBtn = document.getElementById("logoutBtn");
+  const paginationUl = document.getElementById("expensePagination"); // Ensure this ID exists in HTML
 
   // Welcome user
   const name = localStorage.getItem("userName");
@@ -38,24 +40,27 @@ document.addEventListener("DOMContentLoaded", () => {
     expenseForm.addEventListener("submit", addExpense);
   }
 
-  // Initial load
-  initialize();
+  // Initial load - starts with page 1
+  fetchExpenses(1);
 
   // ================================
   // FUNCTIONS
   // ================================
 
-  async function initialize() {
+  async function fetchExpenses(page) {
     try {
+      currentPage = page;
       const response = await axios.get(
-        "http://localhost:3000/api/expense/getexpenses",
+        `http://localhost:3000/api/expense/getexpenses?page=${page}`,
         {
           headers: { Authorization: token },
         },
       );
 
-      expenseList = response.data;
+      // Backend returns { expenses: [], totalPages: x, currentPage: y }
+      expenseList = response.data.expenses;
       renderUI();
+      renderPagination(response.data.totalPages, response.data.currentPage);
     } catch (err) {
       handleAuthError(err);
     }
@@ -63,7 +68,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function renderUI() {
     ul.innerHTML = "";
+    if (expenseList.length === 0) {
+      ul.innerHTML =
+        '<li class="list-group-item text-center">No expenses found.</li>';
+      return;
+    }
     expenseList.forEach((expense) => display(expense));
+  }
+
+  function renderPagination(totalPages, activePage) {
+    if (!paginationUl) return;
+    paginationUl.innerHTML = "";
+
+    for (let i = 1; i <= totalPages; i++) {
+      const li = document.createElement("li");
+      li.className = `page-item ${i === activePage ? "active" : ""}`;
+
+      const btn = document.createElement("button");
+      btn.className = "page-link";
+      btn.innerText = i;
+      btn.onclick = () => fetchExpenses(i);
+
+      li.appendChild(btn);
+      paginationUl.appendChild(li);
+    }
   }
 
   async function addExpense(e) {
@@ -80,7 +108,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     try {
-      const response = await axios.post(
+      await axios.post(
         "http://localhost:3000/api/expense/addexpense",
         expenseObj,
         {
@@ -88,8 +116,8 @@ document.addEventListener("DOMContentLoaded", () => {
         },
       );
 
-      expenseList.push(response.data.expense);
-      renderUI();
+      // After adding, always go back to page 1 to see the newest item
+      fetchExpenses(1);
       clearInputs();
     } catch (err) {
       console.error("Error saving expense:", err);
@@ -100,7 +128,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const li = document.createElement("li");
     li.id = `expense-${expense.id}`;
     li.className =
-      "list-group-item d-flex justify-content-between align-items-center mb-2 p-2 border rounded bg-light";
+      "list-group-item d-flex justify-content-between align-items-center mb-1 p-2 border rounded bg-light";
 
     li.innerHTML = `
       <span>
@@ -126,8 +154,8 @@ document.addEventListener("DOMContentLoaded", () => {
         },
       );
 
-      expenseList = expenseList.filter((exp) => exp.id !== id);
-      renderUI();
+      // Refresh the current page to update the list and totals correctly
+      fetchExpenses(currentPage);
     } catch (err) {
       console.error("Delete failed:", err);
     }

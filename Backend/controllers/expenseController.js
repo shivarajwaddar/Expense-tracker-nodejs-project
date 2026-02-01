@@ -9,8 +9,24 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 // 1. Get ONLY the logged-in user's expenses
 const getExpenses = async (req, res) => {
   try {
-    const expenses = await Expense.findAll({ where: { userId: req.user.id } });
-    res.status(200).json(expenses);
+    const page = parseInt(req.query.page) || 1;
+    const limit = 10; // Updated from 5 to 10
+    const offset = (page - 1) * limit;
+
+    // findAndCountAll is essential for pagination logic
+    const { count, rows } = await Expense.findAndCountAll({
+      where: { userId: req.user.id },
+      limit: limit,
+      offset: offset,
+      order: [["createdAt", "DESC"]], // Shows newest expenses first
+    });
+
+    res.status(200).json({
+      expenses: rows,
+      totalItems: count,
+      totalPages: Math.ceil(count / limit),
+      currentPage: page,
+    });
   } catch (error) {
     res.status(500).json({ message: "Server Error", error: error.message });
   }
