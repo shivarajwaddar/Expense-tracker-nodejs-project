@@ -1,5 +1,9 @@
 require("dotenv").config();
 
+const fs = require("fs");
+const path = require("path");
+const morgan = require("morgan");
+
 const express = require("express");
 const db = require("./util/db-connection");
 const cors = require("cors");
@@ -13,9 +17,23 @@ const forgotPasswordRoute = require("./routes/passwordRoute");
 
 const app = express();
 
+// --- LOGGING SETUP ---
+// 1. Create a write stream in 'append' mode ('a')
+const accessLogStream = fs.createWriteStream(
+  path.join(__dirname, "access.log"),
+  { flags: "a" },
+);
+
+// 2. Log to Terminal (concise & colored for dev)
+app.use(morgan("dev"));
+
+// 3. Log to File (detailed 'combined' format for the log file)
+app.use(morgan("combined", { stream: accessLogStream }));
+// ---------------------
+
 // Middleware
 app.use(express.json());
-app.use(express.urlencoded({ extended: true })); // IMPORTANT for Cashfree
+app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 
 // Health check
@@ -30,15 +48,15 @@ setupAssociations();
 app.use("/api/users", userRouter);
 app.use("/api/expense", expenseRouter);
 app.use("/api/payment", paymentRouter);
-// Mount the premium routes with the /api/premium prefix
 app.use("/api/premium", premiumRoutes);
 app.use("/password", forgotPasswordRoute);
 
 // DB & Server
 db.sync({ alter: true })
   .then(() => {
-    app.listen(3000, () => {
-      console.log("Server running on port 3000");
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT, () => {
+      console.log(`>>> Server running on port ${PORT}`);
     });
   })
   .catch((err) => {
