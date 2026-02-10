@@ -65,6 +65,7 @@ const addExpense = async (req, res) => {
         description,
         category: finalCategory,
         userId: req.user.id,
+        note: `Added via API on ${new Date().toLocaleDateString()}`,
       },
       { transaction: t },
     );

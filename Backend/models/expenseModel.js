@@ -20,6 +20,11 @@ const Expenses = sequelize.define("expenses", {
     type: DataTypes.STRING,
     allowNull: false,
   },
+  // ADD THIS TO MATCH YOUR MIGRATION
+  note: {
+    type: DataTypes.STRING,
+    allowNull: true, // Optional field
+  },
 });
 
 module.exports = Expenses;

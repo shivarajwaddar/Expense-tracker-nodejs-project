@@ -23,5 +23,8 @@
     "nodemon": "^3.1.11",
     "sequelize": "^6.37.7"
   },
-  "description": ""
+  "description": "",
+  "devDependencies": {
+    "sequelize-cli": "^6.6.5"
+  }
 }
