@@ -1,6 +1,7 @@
 const User = require("../models/userModel");
 const Expense = require("../models/expenseModel");
 const Order = require("../models/orderModel");
+const DownloadedFile = require("../models/downloadedFiles");
 const ForgotPasswordRequest = require("../models/forgotPasswordRequest"); // Corrected path
 
 function setupAssociations() {
@@ -20,5 +21,9 @@ function setupAssociations() {
   });
   ForgotPasswordRequest.belongsTo(User, { foreignKey: "userId" });
 }
+
+// Update the association in app.js or your model file
+User.hasMany(DownloadedFile, { foreignKey: "dbUserId" });
+DownloadedFile.belongsTo(User, { foreignKey: "dbUserId" });
 
 module.exports = setupAssociations;

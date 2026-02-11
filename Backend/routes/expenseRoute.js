@@ -4,6 +4,8 @@ const {
   getExpenses,
   addExpense,
   deleteExpense,
+  downloadexpenses,
+  getDownloadHistory,
 } = require("../controllers/expenseController");
 const route = express.Router();
 
@@ -13,6 +15,17 @@ route.delete(
   "/deleteexpense/:id",
   userAuthentication.authenticate,
   deleteExpense,
+);
+route.get(
+  "/downloadexpenses",
+  userAuthentication.authenticate,
+  downloadexpenses,
+);
+
+route.get(
+  "/downloadhistory",
+  userAuthentication.authenticate,
+  getDownloadHistory,
 );
 
 module.exports = route;

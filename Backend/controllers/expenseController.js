@@ -1,6 +1,9 @@
 const Expense = require("../models/expenseModel"); // Renamed to singular for consistency
 const sequelize = require("../util/db-connection");
 
+const DownloadedFile = require("../models/downloadedFiles");
+const AWS = require("aws-sdk");
+
 const { GoogleGenAI } = require("@google/genai");
 
 // Initialize Gemini with your API Key
@@ -187,4 +190,83 @@ const deleteExpense = async (req, res) => {
 //   }
 // };
 
-module.exports = { getExpenses, addExpense, deleteExpense };
+function uploadToS3(stringifiedExpenses, fileName) {
+  // These now point to your NEW keys from the screenshot
+  const BUCKET_NAME = process.env.BUCKET_NAME;
+  const IAM_USER_KEY = process.env.IAM_USER_KEY;
+  const IAM_USER_SECRET = process.env.IAM_USER_SECRET;
+
+  const s3bucket = new AWS.S3({
+    accessKeyId: IAM_USER_KEY,
+    secretAccessKey: IAM_USER_SECRET,
+    region: "ap-southeast-2",
+  });
+
+  const params = {
+    Bucket: BUCKET_NAME,
+    Key: fileName,
+    Body: stringifiedExpenses,
+    ACL: "public-read",
+  };
+
+  return new Promise((resolve, reject) => {
+    s3bucket.upload(params, (err, data) => {
+      if (err) {
+        console.error("S3 Upload Error:", err);
+        reject(err);
+      } else {
+        console.log("S3 Upload Success:", data.Location);
+        resolve(data.Location);
+      }
+    });
+  });
+}
+const downloadexpenses = async (req, res) => {
+  try {
+    const expenses = await req.user.getExpenses(); // Fetches expenses for User 1
+    const stringifiedExpenses = JSON.stringify(expenses);
+
+    const date = new Date().toISOString().split("T")[0]; // Gets YYYY-MM-DD
+    const fileName = `Expense_User${req.user.id}_${date}.txt`;
+
+    // Wait for the S3 upload to complete
+    const fileUrl = await uploadToS3(stringifiedExpenses, fileName);
+
+    await DownloadedFile.create({
+      fileUrl: fileUrl, // The link from S3
+      fileName: fileName, // The name of the file
+      dbUserId: req.user.id, // You MUST manually link it to the user
+    });
+
+    // Send the URL back to your frontend report.js
+    res.status(200).json({ fileUrl, success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ fileUrl: "", success: false, err: err });
+  }
+};
+
+const getDownloadHistory = async (req, res) => {
+  try {
+    const history = await DownloadedFile.findAll({
+      // Use the exact column name 'dbUserId' from your MySQL screenshot
+      where: { dbUserId: req.user.id },
+      order: [["createdAt", "DESC"]],
+    });
+
+    res.status(200).json({ history, success: true });
+  } catch (err) {
+    console.error("HISTORY ERROR:", err);
+    res
+      .status(500)
+      .json({ message: "Internal Server Error", error: err.message });
+  }
+};
+
+module.exports = {
+  getExpenses,
+  addExpense,
+  deleteExpense,
+  downloadexpenses,
+  getDownloadHistory,
+};

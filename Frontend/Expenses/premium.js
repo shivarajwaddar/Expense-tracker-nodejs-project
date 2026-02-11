@@ -71,7 +71,7 @@ function showPremiumUI() {
   const showReportBtn = document.getElementById("reportsBtn");
 
   if (showReportBtn) {
-    showReportBtn.classList.remove("d-none");
+    showReportBtn.classList.remove("d-none"); // show this button when click on it goes to report.html from provide href on expenese-tracker.html
   }
 
   if (premiumBtn) {

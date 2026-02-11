@@ -26,7 +26,6 @@ function formatDate(dateStr) {
 async function loadReport() {
   const token = localStorage.getItem("token");
   try {
-    // We fetch the full list for reporting to ensure totals are accurate
     const response = await axios.get(
       "http://localhost:3000/api/expense/getexpenses",
       {
@@ -42,7 +41,6 @@ async function loadReport() {
       income: 0,
     }));
 
-    // Merge and Sort (Newest Date first)
     allCombinedData = [...localIncome, ...backendExpenses].sort(
       (a, b) => new Date(b.date) - new Date(a.date),
     );
@@ -63,7 +61,6 @@ function displayPage(page) {
   const startIndex = (page - 1) * rowsPerPage;
   const endIndex = startIndex + rowsPerPage;
 
-  // Take only the 10 rows for this page
   const pageData = allCombinedData.slice(startIndex, endIndex);
 
   renderReportTable(pageData);
@@ -74,10 +71,8 @@ function renderReportTable(data) {
   const tableBody = document.getElementById("reportTableBody");
   const tableFooter = document.getElementById("reportTableFooter");
 
-  // Clear current view
   tableBody.innerHTML = "";
 
-  // Render Rows for CURRENT PAGE
   data.forEach((item) => {
     const inc = parseFloat(item.income) || 0;
     const exp = parseFloat(item.amount) || 0;
@@ -93,7 +88,6 @@ function renderReportTable(data) {
     tableBody.insertAdjacentHTML("beforeend", row);
   });
 
-  // Calculate GRAND TOTALS (Across ALL pages)
   let totalIncome = 0;
   let totalExpense = 0;
 
@@ -104,7 +98,6 @@ function renderReportTable(data) {
 
   const netBalance = totalIncome - totalExpense;
 
-  // Update Footer with Overall Calculations
   tableFooter.innerHTML = `
         <tr class="table-light">
             <td colspan="3" class="text-end fw-bold">Grand Totals (All Data):</td>
@@ -134,5 +127,98 @@ function renderPaginationButtons() {
   }
 }
 
+// ==========================================
+// 4. DOWNLOAD BUTTON EVENT LISTENER (NEW)
+// ==========================================
+const downloadBtn = document.getElementById("downloadReportBtn");
+
+if (downloadBtn) {
+  downloadBtn.addEventListener("click", async () => {
+    const token = localStorage.getItem("token");
+
+    try {
+      // 1. Change button UI to show "Loading"
+      const originalHTML = downloadBtn.innerHTML;
+      downloadBtn.innerHTML = `<span class="spinner-border spinner-border-sm me-1"></span> Downloading...`;
+      downloadBtn.disabled = true;
+
+      // 2. Request the download URL from backend
+      const response = await axios.get(
+        "http://localhost:3000/api/expense/downloadexpenses",
+        {
+          headers: { Authorization: token },
+        },
+      );
+
+      if (response.status === 200) {
+        // 3. The backend returns { fileUrl: "..." }
+        const fileUrl = response.data.fileUrl;
+
+        // 4. Create a virtual link to trigger browser download
+        const a = document.createElement("a");
+        a.href = fileUrl;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        // Refresh the history table so the new file shows up immediately
+        loadDownloadHistory();
+      }
+
+      // Reset button
+      downloadBtn.innerHTML = originalHTML;
+      downloadBtn.disabled = false;
+    } catch (err) {
+      console.error("Download Error:", err);
+      alert(err.response?.data?.message || "Error: Could not download report.");
+
+      // Reset button on error
+      downloadBtn.innerHTML = `<i class="bi bi-file-earmark-spreadsheet me-1"></i> Download File`;
+      downloadBtn.disabled = false;
+    }
+  });
+}
+
+async function loadDownloadHistory() {
+  const token = localStorage.getItem("token");
+  try {
+    const response = await axios.get(
+      "http://localhost:3000/api/expense/downloadhistory",
+      {
+        headers: { Authorization: token },
+      },
+    );
+
+    const historyData = response.data.history;
+    const historyTableBody = document.getElementById(
+      "downloadHistoryTableBody",
+    );
+    historyTableBody.innerHTML = "";
+
+    if (historyData.length === 0) {
+      historyTableBody.innerHTML = `<tr><td colspan="3" class="text-muted">No download history found.</td></tr>`;
+      return;
+    }
+
+    historyData.forEach((item) => {
+      const row = `
+                <tr>
+                    <td>${new Date(item.createdAt).toLocaleDateString()}</td>
+                    <td>${item.fileName}</td>
+                    <td>
+                        <a href="${item.fileUrl}" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-download"></i> Download
+                        </a>
+                    </td>
+                </tr>`;
+      historyTableBody.insertAdjacentHTML("beforeend", row);
+    });
+  } catch (err) {
+    console.error("Error loading download history:", err);
+  }
+}
+
 // Initial Load
-window.addEventListener("DOMContentLoaded", loadReport);
+window.addEventListener("DOMContentLoaded", () => {
+  loadReport(); // Your existing expense table
+  loadDownloadHistory(); // Your new download history table
+});

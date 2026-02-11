@@ -19,7 +19,7 @@
       class="navbar bg-white shadow-sm px-4 d-flex justify-content-between sticky-top"
     >
       <h4 class="fw-bold text-primary m-0">
-        <i class="bi bi-wallet2 me-2"></i>SpendWise
+        <i class="bi bi-wallet2 me-2"></i>Expense Tracker
       </h4>
       <div class="d-flex gap-2">
         <a
@@ -39,7 +39,7 @@
             <p class="text-muted small">Viewing your transaction history</p>
           </div>
           <button id="downloadReportBtn" class="btn btn-success btn-sm fw-bold">
-            <i class="bi bi-file-earmark-spreadsheet me-1"></i> Export CSV
+            <i class="bi bi-file-earmark-spreadsheet me-1"></i> Download File
           </button>
         </div>
 
@@ -105,6 +105,24 @@
             class="pagination pagination-sm justify-content-center"
           ></ul>
         </nav>
+      </div>
+    </div>
+    <div class="card shadow-sm border-0 p-4 mt-4">
+      <div class="text-start mb-3">
+        <h3 class="text-primary fw-bold m-0">Download History</h3>
+        <p class="text-muted small">Access your previously generated reports</p>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-dark">
+            <tr class="text-center">
+              <th>Date Created</th>
+              <th>File Name</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="downloadHistoryTableBody" class="text-center"></tbody>
+        </table>
       </div>
     </div>
 

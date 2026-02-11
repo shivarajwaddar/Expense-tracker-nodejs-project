@@ -5,3 +5,5 @@ config.json
 nodemon.json
 access.log
 
+# Ignore database files
+*.sqlite
