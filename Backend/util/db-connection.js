@@ -1,11 +1,11 @@
 const { Sequelize } = require("sequelize");
 
 const sequelize = new Sequelize(
-  "expense_tracker",
-  "root",
-  process.env.DB_PASSWORD || null,
+  process.env.DB_NAME, // This will pull "expense_tracker"
+  process.env.DB_USER, // This will pull "root"
+  process.env.DB_PASSWORD, // This will pull "Shiva@123"
   {
-    host: "localhost",
+    host: process.env.DB_HOST, // This will pull "localhost"
     dialect: "mysql",
   },
 );

@@ -195,11 +195,12 @@ function uploadToS3(stringifiedExpenses, fileName) {
   const BUCKET_NAME = process.env.BUCKET_NAME;
   const IAM_USER_KEY = process.env.IAM_USER_KEY;
   const IAM_USER_SECRET = process.env.IAM_USER_SECRET;
+  const REGION = process.env.REGION;
 
   const s3bucket = new AWS.S3({
     accessKeyId: IAM_USER_KEY,
     secretAccessKey: IAM_USER_SECRET,
-    region: "ap-southeast-2",
+    region: REGION,
   });
 
   const params = {
