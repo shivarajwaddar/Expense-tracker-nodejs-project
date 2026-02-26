@@ -49,7 +49,7 @@ app.use("/api/users", userRouter);
 app.use("/api/expense", expenseRouter);
 app.use("/api/payment", paymentRouter);
 app.use("/api/premium", premiumRoutes);
-app.use("/password", forgotPasswordRoute);
+app.use("/api/password", forgotPasswordRoute);
 
 // DB & Server
 db.sync({ alter: true })

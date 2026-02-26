@@ -51,7 +51,7 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       currentPage = page;
       const response = await axios.get(
-        `http://localhost:3000/api/expense/getexpenses?page=${page}`,
+        `http://3.111.169.174/api/expense/getexpenses?page=${page}`,
         {
           headers: { Authorization: token },
         },
@@ -109,7 +109,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     try {
       await axios.post(
-        "http://localhost:3000/api/expense/addexpense",
+        "http://3.111.169.174/api/expense/addexpense",
         expenseObj,
         {
           headers: { Authorization: token },
@@ -148,7 +148,7 @@ document.addEventListener("DOMContentLoaded", () => {
   async function deleteExpense(id) {
     try {
       await axios.delete(
-        `http://localhost:3000/api/expense/deleteexpense/${id}`,
+        `http://3.111.169.174/api/expense/deleteexpense/${id}`,
         {
           headers: { Authorization: token },
         },

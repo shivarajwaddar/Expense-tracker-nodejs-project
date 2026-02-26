@@ -32,7 +32,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 // Checks backend to see if the logged-in user has isPremium = true
 async function checkStatus(token) {
   try {
-    const res = await axios.get("http://localhost:3000/api/users/get-user", {
+    const res = await axios.get("http://localhost/api/users/get-user", {
       headers: { Authorization: token },
     });
     if (res.data.isPremium) {
@@ -47,7 +47,7 @@ async function checkStatus(token) {
 async function verifyAndEnablePremium(orderId, token) {
   try {
     const res = await axios.post(
-      "http://localhost:3000/api/payment/verify",
+      "http://3.111.169.174/api/payment/verify",
       { order_id: orderId },
       { headers: { Authorization: token } },
     );
@@ -96,7 +96,7 @@ async function fetchLeaderboard(token, page = 1) {
 
     // Requesting specific page with a limit of 5 from backend
     const res = await axios.get(
-      `http://localhost:3000/api/premium/leaderboard?page=${page}`,
+      `http://3.111.169.174/api/premium/leaderboard?page=${page}`,
       {
         headers: { Authorization: token },
       },

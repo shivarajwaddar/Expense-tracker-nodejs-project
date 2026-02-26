@@ -16,7 +16,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       const token = localStorage.getItem("token");
       // Call backend to verify if payment was successful
       const response = await axios.post(
-        "http://localhost:3000/api/payment/verify-status",
+        "http://3.111.169.174/api/payment/verify-status",
         { orderId: orderId },
         { headers: { Authorization: token } },
       );
@@ -42,7 +42,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (!token) throw new Error("Please login first");
 
       const res = await axios.post(
-        "http://localhost:3000/api/payment/buy-premium",
+        "http://3.111.169.174/api/payment/buy-premium",
         { plan: "PREMIUM" },
         { headers: { Authorization: token } },
       );

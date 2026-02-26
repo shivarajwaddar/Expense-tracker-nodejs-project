@@ -17,7 +17,7 @@ if (signupForm) {
     try {
       // Sending the POST request
       const response = await axios.post(
-        "http://localhost:3000/api/users/signup/adduser",
+        "http://3.111.169.174/api/users/signup/adduser",
         {
           name,
           email,

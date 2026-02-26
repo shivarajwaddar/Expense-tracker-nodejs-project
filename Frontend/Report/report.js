@@ -27,7 +27,7 @@ async function loadReport() {
   const token = localStorage.getItem("token");
   try {
     const response = await axios.get(
-      "http://localhost:3000/api/expense/getexpenses",
+      "http://3.111.169.174/api/expense/getexpenses",
       {
         headers: { Authorization: token },
       },
@@ -144,7 +144,7 @@ if (downloadBtn) {
 
       // 2. Request the download URL from backend
       const response = await axios.get(
-        "http://localhost:3000/api/expense/downloadexpenses",
+        "http://3.111.169.174/api/expense/downloadexpenses",
         {
           headers: { Authorization: token },
         },
@@ -182,7 +182,7 @@ async function loadDownloadHistory() {
   const token = localStorage.getItem("token");
   try {
     const response = await axios.get(
-      "http://localhost:3000/api/expense/downloadhistory",
+      "http://3.111.169.174/api/expense/downloadhistory",
       {
         headers: { Authorization: token },
       },
