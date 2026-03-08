@@ -22,7 +22,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const ul = document.getElementById("ExpenseList");
   const welcomeMsg = document.getElementById("welcome-user");
   const logoutBtn = document.getElementById("logoutBtn");
-  const paginationUl = document.getElementById("expensePagination"); // Ensure this ID exists in HTML
+  const paginationUl = document.getElementById("expensePagination");
 
   // Welcome user
   const name = localStorage.getItem("userName");
@@ -30,12 +30,12 @@ document.addEventListener("DOMContentLoaded", () => {
     welcomeMsg.innerText = `Welcome, ${name}`;
   }
 
-  // Logout
+  // Logout event
   if (logoutBtn) {
     logoutBtn.addEventListener("click", logout);
   }
 
-  // Add Expense (FORM SUBMIT)
+  // Add Expense event
   if (expenseForm) {
     expenseForm.addEventListener("submit", addExpense);
   }
@@ -50,8 +50,9 @@ document.addEventListener("DOMContentLoaded", () => {
   async function fetchExpenses(page) {
     try {
       currentPage = page;
+      // UPDATED: Using relative path for AWS deployment
       const response = await axios.get(
-        `http://3.111.169.174/api/expense/getexpenses?page=${page}`,
+        `/api/expense/getexpenses?page=${page}`,
         {
           headers: { Authorization: token },
         },
@@ -62,6 +63,7 @@ document.addEventListener("DOMContentLoaded", () => {
       renderUI();
       renderPagination(response.data.totalPages, response.data.currentPage);
     } catch (err) {
+      console.error("Fetch Error:", err);
       handleAuthError(err);
     }
   }
@@ -70,7 +72,7 @@ document.addEventListener("DOMContentLoaded", () => {
     ul.innerHTML = "";
     if (expenseList.length === 0) {
       ul.innerHTML =
-        '<li class="list-group-item text-center">No expenses found.</li>';
+        '<li class="list-group-item text-center text-muted">No expenses found.</li>';
       return;
     }
     expenseList.forEach((expense) => display(expense));
@@ -108,19 +110,17 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     try {
-      await axios.post(
-        "http://3.111.169.174/api/expense/addexpense",
-        expenseObj,
-        {
-          headers: { Authorization: token },
-        },
-      );
+      // UPDATED: Using relative path for AWS deployment
+      await axios.post("/api/expense/addexpense", expenseObj, {
+        headers: { Authorization: token },
+      });
 
-      // After adding, always go back to page 1 to see the newest item
+      // After adding, go back to page 1 to see the newest item
       fetchExpenses(1);
       clearInputs();
     } catch (err) {
       console.error("Error saving expense:", err);
+      alert("Failed to save expense. Please try again.");
     }
   }
 
@@ -135,7 +135,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <strong>₹${expense.amount}</strong> - ${expense.description}
         <small class="text-muted">(${expense.category})</small>
       </span>
-      <button class="btn btn-danger btn-sm">Delete</button>
+      <button class="btn btn-danger btn-sm shadow-sm">Delete</button>
     `;
 
     li.querySelector("button").addEventListener("click", () => {
@@ -146,18 +146,19 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function deleteExpense(id) {
-    try {
-      await axios.delete(
-        `http://3.111.169.174/api/expense/deleteexpense/${id}`,
-        {
-          headers: { Authorization: token },
-        },
-      );
+    if (!confirm("Are you sure you want to delete this expense?")) return;
 
-      // Refresh the current page to update the list and totals correctly
+    try {
+      // UPDATED: Using relative path for AWS deployment
+      await axios.delete(`/api/expense/deleteexpense/${id}`, {
+        headers: { Authorization: token },
+      });
+
+      // Refresh the current page to update the list correctly
       fetchExpenses(currentPage);
     } catch (err) {
       console.error("Delete failed:", err);
+      alert("Failed to delete expense.");
     }
   }
 

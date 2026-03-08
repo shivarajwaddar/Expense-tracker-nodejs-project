@@ -1,27 +1,25 @@
-const Expense = require("../models/expenseModel"); // Renamed to singular for consistency
+const Expense = require("../models/expenseModel");
 const sequelize = require("../util/db-connection");
-
 const DownloadedFile = require("../models/downloadedFiles");
 const AWS = require("aws-sdk");
+const { GoogleGenerativeAI } = require("@google/generative-ai"); // Corrected Import name
 
-const { GoogleGenAI } = require("@google/genai");
+// Initialize Gemini
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // Initialize Model
 
-// Initialize Gemini with your API Key
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-
-// 1. Get ONLY the logged-in user's expenses
+// 1. Get Expenses with Pagination
 const getExpenses = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = 10; // Updated from 5 to 10
+    const limit = 10;
     const offset = (page - 1) * limit;
 
-    // findAndCountAll is essential for pagination logic
     const { count, rows } = await Expense.findAndCountAll({
       where: { userId: req.user.id },
       limit: limit,
       offset: offset,
-      order: [["createdAt", "DESC"]], // Shows newest expenses first
+      order: [["createdAt", "DESC"]],
     });
 
     res.status(200).json({
@@ -35,20 +33,18 @@ const getExpenses = async (req, res) => {
   }
 };
 
-// 2. Add expense
-
+// 2. Add Expense with AI and Transactions
 const addExpense = async (req, res) => {
-  // 1. Start the transaction
   const t = await sequelize.transaction();
 
   try {
     let { amount, description, category } = req.body;
     let finalCategory = category || "Uncategorized";
 
-    // AI Classification logic (keep this outside the DB write if possible)
+    // AI Classification logic - FIXED SYNTAX
     try {
       const prompt = `Classify this expense: "${description}". Reply with only the category name (one word).`;
-      const result = await ai.models.generateContent(prompt);
+      const result = await model.generateContent(prompt);
       const aiResponse = result.response.text().trim();
 
       if (aiResponse) {
@@ -61,7 +57,6 @@ const addExpense = async (req, res) => {
       );
     }
 
-    // 2. Create the Expense (attached to transaction t)
     const newExpense = await Expense.create(
       {
         amount,
@@ -73,11 +68,9 @@ const addExpense = async (req, res) => {
       { transaction: t },
     );
 
-    // 3. Update the User's aggregate total (attached to transaction t)
     const updatedTotal = Number(req.user.totalExpenses) + Number(amount);
     await req.user.update({ totalExpenses: updatedTotal }, { transaction: t });
 
-    // 4. If both operations succeed, commit them to the database
     await t.commit();
 
     res.status(201).json({
@@ -85,126 +78,57 @@ const addExpense = async (req, res) => {
       expense: newExpense,
     });
   } catch (error) {
-    // 5. If ANY operation fails, roll back the changes to keep data consistent
     if (t) await t.rollback();
-
     console.error("ADD EXPENSE ERROR:", error.message);
     res.status(500).json({ message: "Server Error", error: error.message });
   }
 };
-// const addExpense = async (req, res) => {
-//   try {
-//     const { amount, description, category } = req.body;
 
-//     const newExpense = await Expense.create({
-//       amount,
-//       description,
-//       category,
-//       userId: req.user.id,
-//     });
-
-//     const totalExpenses = Number(req.user.totalExpenses) + Number(amount);
-//     await req.user.update({ totalExpenses: totalExpenses });
-
-//     res.status(201).json({
-//       message: "Expense added successfully",
-//       expense: newExpense,
-//     });
-//   } catch (error) {
-//     res.status(500).json({ message: "Server Error", error: error.message });
-//   }
-// };
-
-// 3. Delete expense
-
+// 3. Delete Expense with Transactions
 const deleteExpense = async (req, res) => {
-  // 1. Start the transaction
   const t = await sequelize.transaction();
 
   try {
     const expenseId = req.params.id;
 
-    // Find the expense specifically for this user
     const expense = await Expense.findOne({
       where: { id: expenseId, userId: req.user.id },
-      transaction: t, // Use transaction for the read to ensure data consistency
+      transaction: t,
     });
 
     if (!expense) {
-      await t.rollback(); // Clean up the transaction before returning
+      await t.rollback();
       return res
         .status(404)
         .json({ message: "Expense not found or unauthorized" });
     }
 
-    // 2. Calculate the new total
-    // Safety check: Ensure total doesn't drop below 0
     const newTotal = Math.max(
       0,
       Number(req.user.totalExpenses) - Number(expense.amount),
     );
 
-    // 3. Update the User's aggregate total
     await req.user.update({ totalExpenses: newTotal }, { transaction: t });
-
-    // 4. Delete the expense record
     await expense.destroy({ transaction: t });
 
-    // 5. If everything succeeded, commit to the database
     await t.commit();
-
     res.status(200).json({ message: "Expense deleted successfully" });
   } catch (err) {
-    // 6. Rollback if any step fails
     if (t) await t.rollback();
-
-    console.error("DELETE ERROR:", err.message);
     res.status(500).json({ error: err.message });
   }
 };
-// const deleteExpense = async (req, res) => {
-//   try {
-//     const expenseId = req.params.id;
 
-//     const expense = await Expense.findOne({
-//       where: { id: expenseId, userId: req.user.id },
-//     });
-
-//     if (!expense) {
-//       return res
-//         .status(404)
-//         .json({ message: "Expense not found or unauthorized" });
-//     }
-
-//     // Logic: Subtract amount from the user's totalExpenses
-//     const updatedTotal =
-//       Number(req.user.totalExpenses) - Number(expense.amount);
-
-//     // Update user first, then destroy the expense
-//     await req.user.update({ totalExpenses: updatedTotal });
-//     await expense.destroy();
-
-//     res.status(200).json({ message: "Expense deleted successfully" });
-//   } catch (err) {
-//     res.status(500).json({ error: err.message });
-//   }
-// };
-
+// 4. S3 Upload Logic
 function uploadToS3(stringifiedExpenses, fileName) {
-  // These now point to your NEW keys from the screenshot
-  const BUCKET_NAME = process.env.BUCKET_NAME;
-  const IAM_USER_KEY = process.env.IAM_USER_KEY;
-  const IAM_USER_SECRET = process.env.IAM_USER_SECRET;
-  const REGION = process.env.REGION;
-
   const s3bucket = new AWS.S3({
-    accessKeyId: IAM_USER_KEY,
-    secretAccessKey: IAM_USER_SECRET,
-    region: REGION,
+    accessKeyId: process.env.IAM_USER_KEY,
+    secretAccessKey: process.env.IAM_USER_SECRET,
+    region: process.env.REGION,
   });
 
   const params = {
-    Bucket: BUCKET_NAME,
+    Bucket: process.env.BUCKET_NAME,
     Key: fileName,
     Body: stringifiedExpenses,
     ACL: "public-read",
@@ -212,52 +136,44 @@ function uploadToS3(stringifiedExpenses, fileName) {
 
   return new Promise((resolve, reject) => {
     s3bucket.upload(params, (err, data) => {
-      if (err) {
-        console.error("S3 Upload Error:", err);
-        reject(err);
-      } else {
-        console.log("S3 Upload Success:", data.Location);
-        resolve(data.Location);
-      }
+      if (err) reject(err);
+      else resolve(data.Location);
     });
   });
 }
+
+// 5. Download Expenses
 const downloadexpenses = async (req, res) => {
   try {
-    const expenses = await req.user.getExpenses(); // Fetches expenses for User 1
+    const expenses = await req.user.getExpenses();
     const stringifiedExpenses = JSON.stringify(expenses);
 
-    const date = new Date().toISOString().split("T")[0]; // Gets YYYY-MM-DD
+    const date = new Date().toISOString().split("T")[0];
     const fileName = `Expense_User${req.user.id}_${date}.txt`;
 
-    // Wait for the S3 upload to complete
     const fileUrl = await uploadToS3(stringifiedExpenses, fileName);
 
     await DownloadedFile.create({
-      fileUrl: fileUrl, // The link from S3
-      fileName: fileName, // The name of the file
-      dbUserId: req.user.id, // You MUST manually link it to the user
+      fileUrl: fileUrl,
+      fileName: fileName,
+      dbUserId: req.user.id,
     });
 
-    // Send the URL back to your frontend report.js
     res.status(200).json({ fileUrl, success: true });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ fileUrl: "", success: false, err: err });
+    res.status(500).json({ fileUrl: "", success: false, err: err.message });
   }
 };
 
+// 6. Get Download History
 const getDownloadHistory = async (req, res) => {
   try {
     const history = await DownloadedFile.findAll({
-      // Use the exact column name 'dbUserId' from your MySQL screenshot
       where: { dbUserId: req.user.id },
       order: [["createdAt", "DESC"]],
     });
-
     res.status(200).json({ history, success: true });
   } catch (err) {
-    console.error("HISTORY ERROR:", err);
     res
       .status(500)
       .json({ message: "Internal Server Error", error: err.message });

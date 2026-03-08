@@ -16,14 +16,12 @@ if (signupForm) {
 
     try {
       // Sending the POST request
-      const response = await axios.post(
-        "http://3.111.169.174/api/users/signup/adduser",
-        {
-          name,
-          email,
-          password,
-        },
-      );
+      // Using a relative URL so it works on Localhost and AWS automatically
+      const response = await axios.post("/api/users/signup/adduser", {
+        name,
+        email,
+        password,
+      });
 
       // If successful (Status 201)
       alert(response.data.message);

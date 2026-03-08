@@ -1,25 +1,44 @@
 const User = require("../models/userModel");
+const Expense = require("../models/expenseModel");
+const sequelize = require("../util/db-connection");
 
+/**
+ * Fetches the global leaderboard with pagination.
+ * Orders users by 'totalExpenses' in descending order.
+ */
 exports.getLeaderboard = async (req, res) => {
   try {
-    const page = parseInt(req.query.page) || 1; // Current page from request
-    const limit = 5; // Show only 5 people per page
-    const offset = (page - 1) * limit; // Skip previous users
+    // 1. Get pagination parameters from query string
+    const page = parseInt(req.query.page) || 1;
+    const limit = 5; // Matches the leaderboard UI limit
+    const offset = (page - 1) * limit;
 
+    // 2. Fetch users and total count using findAndCountAll
+    // We only pull id, name, and the pre-calculated totalExpenses column
     const { count, rows } = await User.findAndCountAll({
       attributes: ["id", "name", "totalExpenses"],
-      order: [["totalExpenses", "DESC"]], // Highest spending first
-      limit: limit, //
-      offset: offset, //
+      order: [["totalExpenses", "DESC"]],
+      limit: limit,
+      offset: offset,
     });
 
+    // 3. Send response with pagination metadata
     res.status(200).json({
-      leaderboard: rows,
+      leaderboard: rows.map((user) => ({
+        ...user.toJSON(),
+        // Ensure totalExpenses is never null for the frontend
+        totalExpenses: user.totalExpenses || 0,
+      })),
       totalItems: count,
       totalPages: Math.ceil(count / limit),
       currentPage: page,
     });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error("LEADERBOARD ERROR:", err);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch leaderboard",
+      error: err.message,
+    });
   }
 };

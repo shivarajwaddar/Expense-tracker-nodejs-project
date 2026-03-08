@@ -8,10 +8,10 @@ if (signinForm) {
     const password = document.getElementById("password").value;
 
     try {
-      const response = await axios.post(
-        "http://3.111.169.174/api/users/signin",
-        { email, password },
-      );
+      const response = await axios.post("/api/users/signin", {
+        email,
+        password,
+      });
 
       // 1. Success feedback
       alert(response.data.message);

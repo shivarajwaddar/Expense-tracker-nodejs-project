@@ -26,12 +26,10 @@ function formatDate(dateStr) {
 async function loadReport() {
   const token = localStorage.getItem("token");
   try {
-    const response = await axios.get(
-      "http://3.111.169.174/api/expense/getexpenses",
-      {
-        headers: { Authorization: token },
-      },
-    );
+    // UPDATED: Using relative path for local and production compatibility
+    const response = await axios.get("/api/expense/getexpenses", {
+      headers: { Authorization: token },
+    });
 
     const rawBackendData = response.data.expenses || response.data;
 
@@ -143,12 +141,10 @@ if (downloadBtn) {
       downloadBtn.disabled = true;
 
       // 2. Request the download URL from backend
-      const response = await axios.get(
-        "http://3.111.169.174/api/expense/downloadexpenses",
-        {
-          headers: { Authorization: token },
-        },
-      );
+      // UPDATED: Using relative path
+      const response = await axios.get("/api/expense/downloadexpenses", {
+        headers: { Authorization: token },
+      });
 
       if (response.status === 200) {
         // 3. The backend returns { fileUrl: "..." }
@@ -181,12 +177,10 @@ if (downloadBtn) {
 async function loadDownloadHistory() {
   const token = localStorage.getItem("token");
   try {
-    const response = await axios.get(
-      "http://3.111.169.174/api/expense/downloadhistory",
-      {
-        headers: { Authorization: token },
-      },
-    );
+    // UPDATED: Using relative path
+    const response = await axios.get("/api/expense/downloadhistory", {
+      headers: { Authorization: token },
+    });
 
     const historyData = response.data.history;
     const historyTableBody = document.getElementById(

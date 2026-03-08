@@ -1,6 +1,5 @@
-// controllers/passwordController.js
 const User = require("../models/userModel");
-const ForgotPasswordRequest = require("../models/forgotPasswordRequest"); // Added import
+const ForgotPasswordRequest = require("../models/forgotPasswordRequest");
 const Brevo = require("@getbrevo/brevo");
 const bcrypt = require("bcrypt");
 
@@ -13,35 +12,44 @@ exports.forgotPassword = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // 1. Create a reset request in the database to get a unique UUID
+    // 1. Create a reset request in the database
     const resetRequest = await ForgotPasswordRequest.create({
       userId: user.id,
       isActive: true,
     });
 
-    // 2. Initialize Brevo properly to fix ReferenceError
-    const apiInstance = new Brevo.TransactionalEmailsApi();
-    const apiKey = apiInstance.authentications["apiKey"];
+    // 2. Initialize Brevo properly
+    const defaultClient = Brevo.ApiClient.instance;
+    const apiKey = defaultClient.authentications["api-key"];
     apiKey.apiKey = process.env.BREVO_API_KEY;
 
-    // 3. Setup dynamic reset link using the Request ID
+    const apiInstance = new Brevo.TransactionalEmailsApi();
+
+    // 3. Setup dynamic reset link
+    // FIXED: Change this to your AWS Public IP or Domain
+    const publicIP = "3.111.169.174";
+    const resetLink = `http://${publicIP}/ExpenseTracker/Frontend/ForgotPassword/resetpassword.html?id=${resetRequest.id}`;
+
     const sendSmtpEmail = new Brevo.SendSmtpEmail();
     sendSmtpEmail.subject = "Password Reset Request";
-    const resetLink = `http://127.0.0.1:5500/ExpenseTracker/Frontend/ForgotPassword/resetpassword.html?id=${resetRequest.id}`;
     sendSmtpEmail.htmlContent = `
             <html>
-                <body>
-                    <h1>Reset Your Password</h1>
-                    <p>Click the link below to securely reset your password:</p>
-                    <a href="${resetLink}" style="padding: 10px; background-color: blue; color: white; text-decoration: none;">
-                        Reset My Password
-                    </a>
+                <body style="font-family: Arial, sans-serif; line-height: 1.6;">
+                    <h2>Reset Your Password</h2>
+                    <p>We received a request to reset your password. Click the button below to proceed:</p>
+                    <div style="margin: 20px 0;">
+                        <a href="${resetLink}" style="padding: 12px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">
+                            Reset My Password
+                        </a>
+                    </div>
+                    <p>If you did not request this, please ignore this email.</p>
+                    <p>The link will remain active until you use it.</p>
                 </body>
             </html>`;
 
     sendSmtpEmail.sender = {
-      name: "Expense Tracker",
-      email: "shivarajwaddar123@gmail.com", // Ensure this is verified in Brevo
+      name: "Expense Tracker Support",
+      email: "shivarajwaddar123@gmail.com",
     };
     sendSmtpEmail.to = [{ email: email }];
 
@@ -50,8 +58,10 @@ exports.forgotPassword = async (req, res) => {
 
     res.status(200).json({ message: "Reset email sent successfully" });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" });
+    console.error("BREVO ERROR:", err);
+    res
+      .status(500)
+      .json({ message: "Failed to send email. Please check server logs." });
   }
 };
 
@@ -66,21 +76,29 @@ exports.resetPassword = async (req, res) => {
     });
 
     if (!request) {
-      return res.status(400).json({ message: "Invalid or expired link" });
+      return res
+        .status(400)
+        .json({ message: "This link is invalid or has already been used." });
     }
 
+    // Hash the new password
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    // Update user password and deactivate the link
+    // Update user password and deactivate the link (Transaction-like behavior)
     await User.update(
       { password: hashedPassword },
       { where: { id: request.userId } },
     );
+
     await request.update({ isActive: false });
 
-    res.status(200).json({ message: "Password reset successful" });
+    res
+      .status(200)
+      .json({ message: "Password updated successfully! You can now login." });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Something went wrong" });
+    console.error("RESET ERROR:", err);
+    res
+      .status(500)
+      .json({ message: "Something went wrong during password update." });
   }
 };

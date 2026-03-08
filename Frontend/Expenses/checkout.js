@@ -1,4 +1,5 @@
 document.addEventListener("DOMContentLoaded", async () => {
+  // Note: Change "sandbox" to "production" when you go live with real money
   const cashfree = Cashfree({ mode: "sandbox" });
 
   const premiumBtn = document.getElementById("premiumBtn");
@@ -7,58 +8,67 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (!premiumBtn) return;
 
-  // --- NEW: CHECK IF USER JUST RETURNED FROM PAYMENT ---
+  // --- 1. CHECK IF USER JUST RETURNED FROM PAYMENT ---
   const urlParams = new URLSearchParams(window.location.search);
   const orderId = urlParams.get("order_id");
 
   if (orderId) {
     try {
       const token = localStorage.getItem("token");
-      // Call backend to verify if payment was successful
+
+      // FIXED: Using relative path for AWS deployment
       const response = await axios.post(
-        "http://3.111.169.174/api/payment/verify-status",
+        "/api/payment/verify-status",
         { orderId: orderId },
         { headers: { Authorization: token } },
       );
 
       if (response.data.success) {
         alert("Congratulations! You are now a Premium User.");
-        // Refresh to show Leaderboard button immediately
+        // Redirect to clean the URL and refresh UI
         window.location.href = "expense-tracker.html";
       }
     } catch (err) {
-      console.error("Verification failed", err);
+      console.error("Payment verification failed", err);
     }
   }
 
-  // --- EXISTING: START PAYMENT FLOW ---
+  // --- 2. START PAYMENT FLOW ---
   premiumBtn.addEventListener("click", async (e) => {
     e.preventDefault();
-    premiumText.classList.add("d-none");
-    premiumLoader.classList.remove("d-none");
+
+    // UI Feedback
+    if (premiumText) premiumText.classList.add("d-none");
+    if (premiumLoader) premiumLoader.classList.remove("d-none");
 
     try {
       const token = localStorage.getItem("token");
-      if (!token) throw new Error("Please login first");
+      if (!token) {
+        alert("Please login first");
+        window.location.href = "../Signin/signin.html";
+        return;
+      }
 
+      // FIXED: Using relative path for AWS deployment
       const res = await axios.post(
-        "http://3.111.169.174/api/payment/buy-premium",
+        "/api/payment/buy-premium",
         { plan: "PREMIUM" },
         { headers: { Authorization: token } },
       );
 
       const { payment_session_id } = res.data;
 
+      // Cashfree Checkout
       await cashfree.checkout({
         paymentSessionId: payment_session_id,
-        redirectTarget: "_self", // Redirects user to Cashfree site
+        redirectTarget: "_self",
       });
     } catch (err) {
-      alert("Payment failed to start. Check console.");
-      console.error(err);
+      alert("Payment failed to start. Check console for details.");
+      console.error("Payment Error:", err);
     } finally {
-      premiumText.classList.remove("d-none");
-      premiumLoader.classList.add("d-none");
+      if (premiumText) premiumText.classList.remove("d-none");
+      if (premiumLoader) premiumLoader.classList.add("d-none");
     }
   });
 });

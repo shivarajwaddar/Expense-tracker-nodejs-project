@@ -18,16 +18,12 @@ const forgotPasswordRoute = require("./routes/passwordRoute");
 const app = express();
 
 // --- LOGGING SETUP ---
-// 1. Create a write stream in 'append' mode ('a')
 const accessLogStream = fs.createWriteStream(
   path.join(__dirname, "access.log"),
   { flags: "a" },
 );
 
-// 2. Log to Terminal (concise & colored for dev)
 app.use(morgan("dev"));
-
-// 3. Log to File (detailed 'combined' format for the log file)
 app.use(morgan("combined", { stream: accessLogStream }));
 // ---------------------
 
@@ -44,7 +40,8 @@ app.get("/", (req, res) => {
 // Associations
 setupAssociations();
 
-// Routes
+// --- DEPLOYMENT ROUTES ---
+// Using "/api/users" (plural) to match your frontend Axios calls
 app.use("/api/users", userRouter);
 app.use("/api/expense", expenseRouter);
 app.use("/api/payment", paymentRouter);
