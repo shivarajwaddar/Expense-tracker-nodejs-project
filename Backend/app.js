@@ -28,7 +28,7 @@ app.use("/api/password", forgotPasswordRoute);
 
 // Landing page
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "../Frontend/Signin/signin.html"));
+  res.sendFile(path.join(__dirname, "../Frontend/Home/index.html"));
 });
 
 db.sync({ alter: true })

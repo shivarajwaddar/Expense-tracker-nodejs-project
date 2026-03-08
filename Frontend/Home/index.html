@@ -1,0 +1,103 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Expense Tracker</title>
+
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        background: #f4f6f8;
+      }
+
+      header {
+        background: #4caf50;
+        color: white;
+        padding: 10px;
+        text-align: center;
+      }
+
+      .container {
+        text-align: center;
+        margin-top: 40px;
+      }
+
+      ul {
+        list-style: none;
+        padding: 0;
+      }
+
+      li {
+        padding: 8px;
+        font-size: 18px;
+      }
+
+      .buttons {
+        margin-top: 30px;
+      }
+
+      button {
+        padding: 12px 25px;
+        margin: 10px;
+        font-size: 16px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+
+      .signin {
+        background: #4caf50;
+        color: white;
+      }
+
+      .signup {
+        background: #2196f3;
+        color: white;
+      }
+
+      footer {
+        margin-top: 80px;
+        text-align: center;
+        color: gray;
+      }
+    </style>
+  </head>
+
+  <body>
+    <header>
+      <h2>Expense Tracker App</h2>
+      <p>Track and Manage Your Expenses Easily</p>
+    </header>
+
+    <div class="container">
+      <h2>Features</h2>
+
+      <ul>
+        <li>✔ Add Daily Expenses</li>
+        <li>✔ Manage Your Expenses</li>
+        <li>✔ Premium Reports</li>
+        <li>✔ Download Expense Data</li>
+      </ul>
+
+      <div class="buttons">
+        <button
+          class="signin"
+          onclick="window.location.href = '/Signin/signin.html'"
+        >
+          Sign In
+        </button>
+
+        <button
+          class="signup"
+          onclick="window.location.href = '/Signup/signup.html'"
+        >
+          Sign Up
+        </button>
+      </div>
+    </div>
+
+    <footer>
+      <p>© 2026 Expense Tracker</p>
+    </footer>
+  </body>
+</html>
