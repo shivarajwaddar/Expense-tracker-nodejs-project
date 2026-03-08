@@ -46,3 +46,52 @@ exports.createOrder = async (req, res) => {
     res.status(500).json({ error: "Could not create order" });
   }
 };
+
+exports.verifyPayment = async (req, res) => {
+  try {
+    const { order_id } = req.body;
+
+    const order = await Order.findOne({
+      where: { order_id },
+    });
+
+    if (!order) {
+      return res.status(404).json({
+        message: "Order not found",
+      });
+    }
+
+    order.status = "SUCCESS";
+    await order.save();
+
+    res.json({
+      success: true,
+      message: "Payment verified",
+    });
+  } catch (error) {
+    console.error("VERIFY PAYMENT ERROR:", error);
+    res.status(500).json({
+      error: "Payment verification failed",
+    });
+  }
+};
+
+exports.verifyStatus = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const order = await Order.findOne({
+      where: { userId: userId, status: "SUCCESS" },
+      order: [["createdAt", "DESC"]],
+    });
+
+    if (order) {
+      return res.json({ premium: true });
+    }
+
+    return res.json({ premium: false });
+  } catch (err) {
+    console.error("VERIFY STATUS ERROR:", err);
+    res.status(500).json({ error: "Status check failed" });
+  }
+};

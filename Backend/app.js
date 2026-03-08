@@ -9,7 +9,7 @@ const userRouter = require("./routes/userRoute");
 const expenseRouter = require("./routes/expenseRoute");
 const paymentRouter = require("./routes/paymentRoute");
 const premiumRoutes = require("./routes/premiumRoute");
-const forgotPasswordRoute = require("./routes/forgotPasswordRoute");
+const forgotPasswordRoute = require("./routes/passwordRoute");
 
 const app = express();
 
