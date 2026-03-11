@@ -52,19 +52,23 @@ const signInUser = async (req, res) => {
       return res.status(401).json({ message: "Invalid password" });
     }
 
-    // 3. Generate Token (Encrypting ID and Name)
-    // Using a secret key - in production, use process.env.JWT_SECRET
+    // 3. Generate Token (Including isPremium in the payload)
     const token = jwt.sign(
-      { userId: user.id, name: user.name },
-      process.env.JWT_SECRET, // randonm takenm
-      { expiresIn: "24h" }, // Token will expire in 24 hours
+      {
+        userId: user.id,
+        name: user.name,
+        isPremium: user.isPremium, // <-- CRITICAL: Include this so frontend sees it
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "24h" },
     );
 
     // 4. Send Success Response
     res.status(200).json({
       message: "Login successful",
       token: token,
-      name: user.name, // Add this line!
+      name: user.name,
+      isPremium: user.isPremium, // <-- Send this for immediate UI update
     });
   } catch (err) {
     console.error(err);

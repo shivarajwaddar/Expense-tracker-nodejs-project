@@ -10,9 +10,11 @@ const expenseRouter = require("./routes/expenseRoute");
 const paymentRouter = require("./routes/paymentRoute");
 const premiumRoutes = require("./routes/premiumRoute");
 const forgotPasswordRoute = require("./routes/passwordRoute");
+const setupAssociations = require("./util/associations");
 
 const app = express();
 
+setupAssociations();
 app.use(cors());
 app.use(bodyParser.json());
 

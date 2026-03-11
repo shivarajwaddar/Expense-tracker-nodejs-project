@@ -1,6 +1,7 @@
 const Order = require("../models/orderModel");
 const sequelize = require("../util/db-connection");
 const { Cashfree } = require("cashfree-pg");
+const User = require("../models/userModel");
 
 Cashfree.XClientId = process.env.PAYMENT_APP_ID;
 Cashfree.XClientSecret = process.env.PAYMENT_SECRET_KEY;
@@ -51,9 +52,8 @@ exports.verifyPayment = async (req, res) => {
   try {
     const { order_id } = req.body;
 
-    const order = await Order.findOne({
-      where: { order_id },
-    });
+    // 1. Find the order in the database
+    const order = await Order.findOne({ where: { id: order_id } });
 
     if (!order) {
       return res.status(404).json({
@@ -61,12 +61,21 @@ exports.verifyPayment = async (req, res) => {
       });
     }
 
+    // 2. Update the Order status to SUCCESS
     order.status = "SUCCESS";
     await order.save();
 
-    res.json({
+    // 3. Update the User's premium status
+    // Instead of req.user, we use order.userId to find the correct use
+    const user = await User.findByPk(order.userId);
+
+    if (user) {
+      await user.update({ isPremium: true });
+    }
+
+    return res.status(200).json({
       success: true,
-      message: "Payment verified",
+      message: "Transaction Successful and User Upgraded",
     });
   } catch (error) {
     console.error("VERIFY PAYMENT ERROR:", error);
@@ -78,14 +87,9 @@ exports.verifyPayment = async (req, res) => {
 
 exports.verifyStatus = async (req, res) => {
   try {
-    const userId = req.user.id;
-
-    const order = await Order.findOne({
-      where: { userId: userId, status: "SUCCESS" },
-      order: [["createdAt", "DESC"]],
-    });
-
-    if (order) {
+    // req.user is already fetched by your middleware
+    // So we just check the isPremium property directly
+    if (req.user && req.user.isPremium) {
       return res.json({ premium: true });
     }
 
