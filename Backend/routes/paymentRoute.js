@@ -1,22 +1,25 @@
 const express = require("express");
+const router = express.Router();
+
 const paymentController = require("../controllers/paymentController");
 const userAuthentication = require("../middleware/auth");
 
-const router = express.Router();
-
-// 1. Create order (protected)
+// Create order
 router.post(
   "/buy-premium",
   userAuthentication.authenticate,
   paymentController.createOrder,
 );
 
-// 2. Cashfree redirect/webhook (No auth)
-router.post("/verify", paymentController.verifyPayment);
-
-// 3. Verify status for Frontend (protected)
-// This was causing the error if "verifyStatus" was missing in the controller
+// Verify payment after redirect
 router.post(
+  "/verify",
+  userAuthentication.authenticate,
+  paymentController.verifyPayment,
+);
+
+// Check premium status
+router.get(
   "/verify-status",
   userAuthentication.authenticate,
   paymentController.verifyStatus,
