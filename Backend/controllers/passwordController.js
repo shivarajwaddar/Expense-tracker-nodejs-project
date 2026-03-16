@@ -1,6 +1,6 @@
 const User = require("../models/userModel");
 const ForgotPasswordRequest = require("../models/forgotPasswordRequest");
-const SibApiV3Sdk = require("@getbrevo/brevo"); // Use the correct SDK name
+const Brevo = require("@getbrevo/brevo");
 const bcrypt = require("bcrypt");
 
 exports.forgotPassword = async (req, res) => {
@@ -18,18 +18,19 @@ exports.forgotPassword = async (req, res) => {
       isActive: true,
     });
 
-    // 2. Initialize Brevo correctly
-    const apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
-
-    // Configure API Key from your .env file
-    const apiKey = apiInstance.authentications["apiKey"];
+    // 2. Initialize Brevo properly
+    const defaultClient = Brevo.ApiClient.instance;
+    const apiKey = defaultClient.authentications["api-key"];
     apiKey.apiKey = process.env.BREVO_API_KEY;
 
+    const apiInstance = new Brevo.TransactionalEmailsApi();
+
     // 3. Setup dynamic reset link
+    // FIXED: Change this to your AWS Public IP or Domain
     const publicIP = "3.109.121.108";
     const resetLink = `http://${publicIP}/ExpenseTracker/Frontend/ForgotPassword/resetpassword.html?id=${resetRequest.id}`;
 
-    const sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
+    const sendSmtpEmail = new Brevo.SendSmtpEmail();
     sendSmtpEmail.subject = "Password Reset Request";
     sendSmtpEmail.htmlContent = `
             <html>
@@ -48,25 +49,19 @@ exports.forgotPassword = async (req, res) => {
 
     sendSmtpEmail.sender = {
       name: "Expense Tracker Support",
-      email: process.env.BREVO_EMAIL, // Uses the sender email from your .env
+      email: "shivarajwaddar123@gmail.com",
     };
     sendSmtpEmail.to = [{ email: email }];
 
     // 4. Send the email
     await apiInstance.sendTransacEmail(sendSmtpEmail);
 
-    return res.status(200).json({ message: "Reset email sent successfully" });
+    res.status(200).json({ message: "Reset email sent successfully" });
   } catch (err) {
-    // Logging specific error details for debugging
-    console.error(
-      "BREVO ERROR DETAIL:",
-      err.response ? err.response.body : err,
-    );
-    return res.status(500).json({
-      message:
-        "Failed to send email. Ensure your API key and Sender Email are valid.",
-      error: err.message,
-    });
+    console.error("BREVO ERROR:", err);
+    res
+      .status(500)
+      .json({ message: "Failed to send email. Please check server logs." });
   }
 };
 
@@ -81,30 +76,29 @@ exports.resetPassword = async (req, res) => {
     });
 
     if (!request) {
-      return res.status(400).json({
-        message: "This link is invalid or has already been used.",
-      });
+      return res
+        .status(400)
+        .json({ message: "This link is invalid or has already been used." });
     }
 
     // Hash the new password
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    // Update user password
+    // Update user password and deactivate the link (Transaction-like behavior)
     await User.update(
       { password: hashedPassword },
       { where: { id: request.userId } },
     );
 
-    // Deactivate the reset link
     await request.update({ isActive: false });
 
-    return res.status(200).json({
-      message: "Password updated successfully! You can now login.",
-    });
+    res
+      .status(200)
+      .json({ message: "Password updated successfully! You can now login." });
   } catch (err) {
     console.error("RESET ERROR:", err);
-    return res.status(500).json({
-      message: "Something went wrong during password update.",
-    });
+    res
+      .status(500)
+      .json({ message: "Something went wrong during password update." });
   }
 };
