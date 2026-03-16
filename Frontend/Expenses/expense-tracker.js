@@ -1,40 +1,31 @@
-// ================================
-// 1. GLOBAL STATE & AUTH
-// ================================
 let expenseList = [];
 let currentPage = 1;
 const token = localStorage.getItem("token");
 
-// Redirect if not logged in
 if (!token) {
   window.location.href = "../Signin/signin.html";
 }
 
-// ================================
-// 2. DOM LOADED
-// ================================
 document.addEventListener("DOMContentLoaded", () => {
-  // --- PAYMENT VERIFICATION LOGIC ---
+  // --- PAYMENT VERIFICATION ---
   const urlParams = new URLSearchParams(window.location.search);
   const orderId = urlParams.get("order_id");
 
   if (orderId) {
     const verifyPayment = async () => {
       try {
-        // Verify with backend
         await axios.post(
           "/api/payment/verify",
           { order_id: orderId },
-          { headers: { Authorization: token } },
+          {
+            headers: { Authorization: token },
+          },
         );
-
         alert("Payment Successful! You are now a Premium User.");
-        // Redirect to landing page
-        window.location.href = "../LandingPage/index.html";
+        // Redirect back to clean URL
+        window.location.href = "expense-tracker.html";
       } catch (err) {
         console.error("Verification failed:", err);
-        alert("Payment verification failed. Redirecting to normal view.");
-        // Clean the URL so the alert doesn't keep popping up
         window.history.replaceState(
           {},
           document.title,
@@ -55,22 +46,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const logoutBtn = document.getElementById("logoutBtn");
   const paginationUl = document.getElementById("expensePagination");
 
-  // Welcome user
   const name = localStorage.getItem("userName");
-  if (name && welcomeMsg) {
-    welcomeMsg.innerText = `Welcome, ${name}`;
-  }
+  if (name && welcomeMsg) welcomeMsg.innerText = `Welcome, ${name}`;
 
-  // Event Listeners
   if (logoutBtn) logoutBtn.addEventListener("click", logout);
   if (expenseForm) expenseForm.addEventListener("submit", addExpense);
 
-  // Initial load
   fetchExpenses(1);
-
-  // ================================
-  // FUNCTIONS
-  // ================================
 
   async function fetchExpenses(page) {
     try {
@@ -85,7 +67,6 @@ document.addEventListener("DOMContentLoaded", () => {
       renderUI();
       renderPagination(response.data.totalPages, response.data.currentPage);
     } catch (err) {
-      console.error("Fetch Error:", err);
       handleAuthError(err);
     }
   }
@@ -124,7 +105,6 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     if (!expenseObj.amount || !expenseObj.description)
       return alert("Please fill all fields");
-
     try {
       await axios.post("/api/expense/addexpense", expenseObj, {
         headers: { Authorization: token },
@@ -132,7 +112,6 @@ document.addEventListener("DOMContentLoaded", () => {
       fetchExpenses(1);
       clearInputs();
     } catch (err) {
-      console.error("Error saving expense:", err);
       alert("Failed to save expense.");
     }
   }
@@ -142,13 +121,8 @@ document.addEventListener("DOMContentLoaded", () => {
     li.id = `expense-${expense.id}`;
     li.className =
       "list-group-item d-flex justify-content-between align-items-center mb-1 p-2 border rounded bg-light";
-    li.innerHTML = `
-            <span>
-                <strong>₹${expense.amount}</strong> - ${expense.description}
-                <small class="text-muted">(${expense.category})</small>
-            </span>
-            <button class="btn btn-danger btn-sm shadow-sm">Delete</button>
-        `;
+    li.innerHTML = `<span><strong>₹${expense.amount}</strong> - ${expense.description} <small>(${expense.category})</small></span>
+                    <button class="btn btn-danger btn-sm">Delete</button>`;
     li.querySelector("button").addEventListener("click", () =>
       deleteExpense(expense.id),
     );
@@ -163,7 +137,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
       fetchExpenses(currentPage);
     } catch (err) {
-      console.error("Delete failed:", err);
+      console.error(err);
     }
   }
 
@@ -173,10 +147,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function handleAuthError(err) {
-    if (err.response && err.response.status === 401) {
-      alert("Session expired.");
-      logout();
-    }
+    if (err.response && err.response.status === 401) logout();
   }
 
   function clearInputs() {
