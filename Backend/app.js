@@ -28,6 +28,8 @@ app.use("/api/payment", paymentRouter);
 app.use("/api/premium", premiumRoutes);
 app.use("/api/password", forgotPasswordRoute);
 
+console.log("Jenkins is automatically building this change!");
+
 // Landing page
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "../Frontend/Home/index.html"));
