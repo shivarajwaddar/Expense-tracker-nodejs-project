@@ -29,7 +29,6 @@ app.use("/api/premium", premiumRoutes);
 app.use("/api/password", forgotPasswordRoute);
 
 console.log("Jenkins is automatically building this change!");
-console.log("Jenkins is automatically building this change!");
 
 // Landing page
 app.get("/", (req, res) => {
