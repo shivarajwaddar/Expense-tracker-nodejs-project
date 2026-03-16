@@ -14,7 +14,38 @@ if (!token) {
 // 2. DOM LOADED
 // ================================
 document.addEventListener("DOMContentLoaded", () => {
-  // DOM ELEMENTS
+  // --- PAYMENT VERIFICATION LOGIC ---
+  const urlParams = new URLSearchParams(window.location.search);
+  const orderId = urlParams.get("order_id");
+
+  if (orderId) {
+    const verifyPayment = async () => {
+      try {
+        // Verify with backend
+        await axios.post(
+          "/api/payment/verify",
+          { order_id: orderId },
+          { headers: { Authorization: token } },
+        );
+
+        alert("Payment Successful! You are now a Premium User.");
+        // Redirect to landing page
+        window.location.href = "../LandingPage/index.html";
+      } catch (err) {
+        console.error("Verification failed:", err);
+        alert("Payment verification failed. Redirecting to normal view.");
+        // Clean the URL so the alert doesn't keep popping up
+        window.history.replaceState(
+          {},
+          document.title,
+          window.location.pathname,
+        );
+      }
+    };
+    verifyPayment();
+  }
+
+  // --- DOM ELEMENTS ---
   const expenseForm = document.getElementById("expenseForm");
   const amountInput = document.getElementById("inputAmount");
   const descInput = document.getElementById("inputDesc");
@@ -30,17 +61,11 @@ document.addEventListener("DOMContentLoaded", () => {
     welcomeMsg.innerText = `Welcome, ${name}`;
   }
 
-  // Logout event
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", logout);
-  }
+  // Event Listeners
+  if (logoutBtn) logoutBtn.addEventListener("click", logout);
+  if (expenseForm) expenseForm.addEventListener("submit", addExpense);
 
-  // Add Expense event
-  if (expenseForm) {
-    expenseForm.addEventListener("submit", addExpense);
-  }
-
-  // Initial load - starts with page 1
+  // Initial load
   fetchExpenses(1);
 
   // ================================
@@ -50,15 +75,12 @@ document.addEventListener("DOMContentLoaded", () => {
   async function fetchExpenses(page) {
     try {
       currentPage = page;
-      // UPDATED: Using relative path for AWS deployment
       const response = await axios.get(
         `/api/expense/getexpenses?page=${page}`,
         {
           headers: { Authorization: token },
         },
       );
-
-      // Backend returns { expenses: [], totalPages: x, currentPage: y }
       expenseList = response.data.expenses;
       renderUI();
       renderPagination(response.data.totalPages, response.data.currentPage);
@@ -81,16 +103,13 @@ document.addEventListener("DOMContentLoaded", () => {
   function renderPagination(totalPages, activePage) {
     if (!paginationUl) return;
     paginationUl.innerHTML = "";
-
     for (let i = 1; i <= totalPages; i++) {
       const li = document.createElement("li");
       li.className = `page-item ${i === activePage ? "active" : ""}`;
-
       const btn = document.createElement("button");
       btn.className = "page-link";
       btn.innerText = i;
       btn.onclick = () => fetchExpenses(i);
-
       li.appendChild(btn);
       paginationUl.appendChild(li);
     }
@@ -98,29 +117,23 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function addExpense(e) {
     e.preventDefault();
-
     const expenseObj = {
       amount: amountInput.value,
       description: descInput.value,
       category: categoryInput.value,
     };
-
-    if (!expenseObj.amount || !expenseObj.description) {
+    if (!expenseObj.amount || !expenseObj.description)
       return alert("Please fill all fields");
-    }
 
     try {
-      // UPDATED: Using relative path for AWS deployment
       await axios.post("/api/expense/addexpense", expenseObj, {
         headers: { Authorization: token },
       });
-
-      // After adding, go back to page 1 to see the newest item
       fetchExpenses(1);
       clearInputs();
     } catch (err) {
       console.error("Error saving expense:", err);
-      alert("Failed to save expense. Please try again.");
+      alert("Failed to save expense.");
     }
   }
 
@@ -129,36 +142,28 @@ document.addEventListener("DOMContentLoaded", () => {
     li.id = `expense-${expense.id}`;
     li.className =
       "list-group-item d-flex justify-content-between align-items-center mb-1 p-2 border rounded bg-light";
-
     li.innerHTML = `
-      <span>
-        <strong>₹${expense.amount}</strong> - ${expense.description}
-        <small class="text-muted">(${expense.category})</small>
-      </span>
-      <button class="btn btn-danger btn-sm shadow-sm">Delete</button>
-    `;
-
-    li.querySelector("button").addEventListener("click", () => {
-      deleteExpense(expense.id);
-    });
-
+            <span>
+                <strong>₹${expense.amount}</strong> - ${expense.description}
+                <small class="text-muted">(${expense.category})</small>
+            </span>
+            <button class="btn btn-danger btn-sm shadow-sm">Delete</button>
+        `;
+    li.querySelector("button").addEventListener("click", () =>
+      deleteExpense(expense.id),
+    );
     ul.appendChild(li);
   }
 
   async function deleteExpense(id) {
-    if (!confirm("Are you sure you want to delete this expense?")) return;
-
+    if (!confirm("Are you sure?")) return;
     try {
-      // UPDATED: Using relative path for AWS deployment
       await axios.delete(`/api/expense/deleteexpense/${id}`, {
         headers: { Authorization: token },
       });
-
-      // Refresh the current page to update the list correctly
       fetchExpenses(currentPage);
     } catch (err) {
       console.error("Delete failed:", err);
-      alert("Failed to delete expense.");
     }
   }
 
@@ -169,7 +174,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function handleAuthError(err) {
     if (err.response && err.response.status === 401) {
-      alert("Session expired. Please login again.");
+      alert("Session expired.");
       logout();
     }
   }

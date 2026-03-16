@@ -22,10 +22,10 @@ exports.createOrder = async (req, res) => {
       order_id: orderId,
       customer_details: {
         customer_id: userId.toString(),
-        customer_phone: "9876543210", // In production, use req.user.phone
+        customer_phone: "9876543210",
       },
       order_meta: {
-        // This URL is where the user goes AFTER entering card details
+        // Redirects back to frontend with the order_id in the URL
         return_url: `http://${publicIP}/Expenses/expense-tracker.html?order_id={order_id}`,
       },
     };
@@ -39,7 +39,7 @@ exports.createOrder = async (req, res) => {
       id: orderId,
       userId: userId,
       plan: "PREMIUM",
-      amount: 1.0, // Match the order_amount above
+      amount: 1.0,
       status: "PENDING",
       paymentSessionId: response.data.payment_session_id,
     });
@@ -50,7 +50,6 @@ exports.createOrder = async (req, res) => {
       order_id: orderId,
     });
   } catch (err) {
-    // --- CRITICAL LOGGING FOR AWS ---
     console.error(
       "CASHFREE API ERROR:",
       err.response ? err.response.data : err.message,
@@ -71,21 +70,17 @@ exports.verifyPayment = async (req, res) => {
       return res.status(400).json({ message: "Order ID is required" });
     }
 
-    // 1. Find the order in your database
     const order = await Order.findOne({ where: { id: order_id } });
 
     if (!order) {
       return res.status(404).json({ message: "Order not found" });
     }
 
-    // 2. Optional: You should call Cashfree.PGOrderFetch to verify the status
-    // But for your current logic, we will update based on the redirect
-
-    // 3. Update the Order status to SUCCESS
+    // Update the Order status to SUCCESS
     order.status = "SUCCESS";
     await order.save();
 
-    // 4. Update the User's premium status
+    // Update the User's premium status
     const user = await User.findByPk(order.userId);
 
     if (user) {
@@ -105,7 +100,6 @@ exports.verifyPayment = async (req, res) => {
 
 exports.verifyStatus = async (req, res) => {
   try {
-    // req.user is populated by your authentication middleware
     if (req.user && req.user.isPremium) {
       return res.json({ premium: true });
     }
