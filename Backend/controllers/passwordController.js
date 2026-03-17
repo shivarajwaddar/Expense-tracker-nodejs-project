@@ -1,6 +1,6 @@
 const User = require("../models/userModel");
 const ForgotPasswordRequest = require("../models/forgotPasswordRequest");
-const Brevo = require("@getbrevo/brevo").default;
+const Brevo = require("@getbrevo/brevo"); // Removed .default for stability
 const bcrypt = require("bcrypt");
 
 exports.forgotPassword = async (req, res) => {
@@ -20,10 +20,8 @@ exports.forgotPassword = async (req, res) => {
 
     // 2. Initialize Brevo properly
     const apiInstance = new Brevo.TransactionalEmailsApi();
-    apiInstance.setApiKey(
-      Brevo.TransactionalEmailsApiApiKeys.apiKey,
-      process.env.BREVO_API_KEY,
-    );
+    // Using index 0 is the most stable way to set the API Key
+    apiInstance.setApiKey(0, process.env.BREVO_API_KEY);
 
     // 3. Setup dynamic reset link
     const publicIP = process.env.PUBLIC_URL || "3.109.121.108:3000";
@@ -57,7 +55,8 @@ exports.forgotPassword = async (req, res) => {
 
     res.status(200).json({ message: "Reset email sent successfully" });
   } catch (err) {
-    console.error("BREVO ERROR:", err);
+    // Detailed logging to help you debug in PM2
+    console.error("BREVO ERROR:", err.response ? err.response.body : err);
     res
       .status(500)
       .json({ message: "Failed to send email. Please check server logs." });
@@ -83,7 +82,7 @@ exports.resetPassword = async (req, res) => {
     // Hash the new password
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    // Update user password and deactivate the link (Transaction-like behavior)
+    // Update user password and deactivate the link
     await User.update(
       { password: hashedPassword },
       { where: { id: request.userId } },
