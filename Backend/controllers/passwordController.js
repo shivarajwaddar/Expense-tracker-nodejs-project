@@ -1,6 +1,6 @@
 const User = require("../models/userModel");
 const ForgotPasswordRequest = require("../models/forgotPasswordRequest");
-const Brevo = require("@getbrevo/brevo");
+const Brevo = require("@getbrevo/brevo").default;
 const bcrypt = require("bcrypt");
 
 exports.forgotPassword = async (req, res) => {
@@ -19,39 +19,38 @@ exports.forgotPassword = async (req, res) => {
     });
 
     // 2. Initialize Brevo properly
-    const defaultClient = Brevo.ApiClient.instance;
-    const apiKey = defaultClient.authentications["api-key"];
-    apiKey.apiKey = process.env.BREVO_API_KEY;
-
     const apiInstance = new Brevo.TransactionalEmailsApi();
+    apiInstance.setApiKey(
+      Brevo.TransactionalEmailsApiApiKeys.apiKey,
+      process.env.BREVO_API_KEY,
+    );
 
     // 3. Setup dynamic reset link
-    // FIXED: Change this to your AWS Public IP or Domain
-    const publicIP = "3.109.121.108";
-    const resetLink = `http://${publicIP}/ExpenseTracker/Frontend/ForgotPassword/resetpassword.html?id=${resetRequest.id}`;
+    const publicIP = process.env.PUBLIC_URL || "3.109.121.108:3000";
+    const resetLink = `http://${publicIP}/ForgotPassword/resetpassword.html?id=${resetRequest.id}`;
 
     const sendSmtpEmail = new Brevo.SendSmtpEmail();
     sendSmtpEmail.subject = "Password Reset Request";
     sendSmtpEmail.htmlContent = `
-            <html>
-                <body style="font-family: Arial, sans-serif; line-height: 1.6;">
-                    <h2>Reset Your Password</h2>
-                    <p>We received a request to reset your password. Click the button below to proceed:</p>
-                    <div style="margin: 20px 0;">
-                        <a href="${resetLink}" style="padding: 12px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">
-                            Reset My Password
-                        </a>
-                    </div>
-                    <p>If you did not request this, please ignore this email.</p>
-                    <p>The link will remain active until you use it.</p>
-                </body>
-            </html>`;
+      <html>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6;">
+          <h2>Reset Your Password</h2>
+          <p>We received a request to reset your password. Click the button below to proceed:</p>
+          <div style="margin: 20px 0;">
+            <a href="${resetLink}" style="padding: 12px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">
+              Reset My Password
+            </a>
+          </div>
+          <p>If you did not request this, please ignore this email.</p>
+          <p>The link will remain active until you use it.</p>
+        </body>
+      </html>`;
 
     sendSmtpEmail.sender = {
       name: "Expense Tracker Support",
       email: "shivarajwaddar123@gmail.com",
     };
-    sendSmtpEmail.to = [{ email: email }];
+    sendSmtpEmail.to = [{ email }];
 
     // 4. Send the email
     await apiInstance.sendTransacEmail(sendSmtpEmail);
